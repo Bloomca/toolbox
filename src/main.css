@@ -1,8 +1,14 @@
+body {
+  margin: 0;
+  padding: 0;
+}
+
 .desktop {
   overflow: hidden;
   width: 100vw;
   height: 100vh;
   position: relative;
+  background-color: var(--bg-colour);
 }
 
 .app-icon {

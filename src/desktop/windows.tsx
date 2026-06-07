@@ -1,9 +1,9 @@
-import { appState$, type Window, type AppId } from "../state";
+import { windowState$, type Window, type AppId } from "../state/window";
 
 import type { State } from "veles";
 
 export function Windows() {
-  const windows$ = appState$.map((state) => state.windows);
+  const windows$ = windowState$.map((state) => state.windows);
   return (
     <>
       {windows$.renderEach({ key: "id" }, ({ elementState: element$ }) => (

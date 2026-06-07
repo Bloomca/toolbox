@@ -24,13 +24,13 @@ type State = {
   activeWindow: Window | null;
 };
 
-export const appState$ = createState<State>({
+export const windowState$ = createState<State>({
   windows: [],
   activeWindow: null,
 });
 
 export function openApp({ appId }: { appId: AppId }) {
-  appState$.update((state) => ({
+  windowState$.update((state) => ({
     ...state,
     windows: state.windows.concat({
       id: id++,

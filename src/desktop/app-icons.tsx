@@ -1,4 +1,4 @@
-import { openApp, type AppId } from "../state";
+import { openApp, type AppId } from "../state/window";
 
 export function AppIcons() {
   return (
