@@ -1,8 +1,11 @@
 import { createState } from "veles";
 
-type AppId = "settings";
+export type AppId = "settings";
 
-type Window = {
+let id = 1;
+
+export type Window = {
+  id: number;
   maximized: boolean;
   minimized: boolean;
   position: {
@@ -25,3 +28,23 @@ export const appState$ = createState<State>({
   windows: [],
   activeWindow: null,
 });
+
+export function openApp({ appId }: { appId: AppId }) {
+  appState$.update((state) => ({
+    ...state,
+    windows: state.windows.concat({
+      id: id++,
+      maximized: false,
+      minimized: false,
+      position: {
+        x: 150,
+        y: 150,
+      },
+      size: {
+        width: 500,
+        height: 400,
+      },
+      appId,
+    }),
+  }));
+}

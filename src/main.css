@@ -2,4 +2,20 @@
   overflow: hidden;
   width: 100vw;
   height: 100vh;
+  position: relative;
+}
+
+.app-icon {
+  width: 32px;
+  height: 32px;
+}
+
+.app-icon:hover {
+  background-color: blue;
+}
+
+.window {
+  position: absolute;
+  border: 1px solid grey;
+  background: rgba(0, 0, 0, 0.3);
 }
