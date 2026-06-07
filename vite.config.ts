@@ -1,14 +1,14 @@
-import { defineConfig } from 'vite'
+import { defineConfig } from "vite";
 
 export default defineConfig({
-    oxc: {
-        jsx: {
-            importSource: 'veles',
-        }
+  oxc: {
+    jsx: {
+      importSource: "veles",
     },
-    resolve: {
-        alias: {
-            'veles/jsx-dev-runtime': 'veles/jsx-runtime',
-        }
-    }
-})
+  },
+  resolve: {
+    alias: {
+      "veles/jsx-dev-runtime": "veles/jsx-runtime",
+    },
+  },
+});
