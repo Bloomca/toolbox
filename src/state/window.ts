@@ -21,7 +21,7 @@ export type Window = {
 
 type State = {
   windows: Window[];
-  activeWindow: Window | null;
+  activeWindow: number | null;
 };
 
 export const windowState$ = createState<State>({
@@ -46,5 +46,19 @@ export function openApp({ appId }: { appId: AppId }) {
       },
       appId,
     }),
+  }));
+}
+
+export function moveWindow(id: number, newX: number, newY: number) {
+  windowState$.update((state) => ({
+    ...state,
+    windows: state.windows.map((window) =>
+      window.id === id
+        ? {
+            ...window,
+            position: { x: newX, y: newY },
+          }
+        : window,
+    ),
   }));
 }

@@ -1,4 +1,5 @@
 import { windowState$, type Window, type AppId } from "../state/window";
+import { Titlebar } from "./titlebar";
 
 import type { State } from "veles";
 
@@ -24,6 +25,7 @@ function Window({ window$ }: { window$: State<Window> }) {
         height: `${window.size.height}px`,
       }))}
     >
+      <Titlebar window$={window$} />
       {window$.render((value) => String(value.id))}
     </div>
   );

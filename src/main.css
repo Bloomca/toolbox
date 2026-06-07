@@ -11,6 +11,12 @@ body {
   background-color: var(--bg-colour);
 }
 
+.titlebar {
+  width: 100%;
+  height: 32px;
+  background-color: burlywood;
+}
+
 .app-icon {
   width: 32px;
   height: 32px;
