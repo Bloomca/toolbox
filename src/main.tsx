@@ -1,25 +1,11 @@
 import { attachComponent } from "veles";
 
+import { Desktop } from "./desktop";
+
 const container = document.getElementById("app");
 
 function App() {
-  return (
-    <>
-      <p>{"Hello world"}</p>
-      <Component />
-    </>
-  );
-}
-
-function Component() {
-  return (
-    <ul>
-      <li>123</li>
-      <li>456</li>
-      <li>789</li>
-      <li>098</li>
-    </ul>
-  );
+  return <Desktop />;
 }
 
 if (container) {
