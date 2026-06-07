@@ -7,7 +7,7 @@
     "prepare": "husky"
   },
   "dependencies": {
-    "veles": "^1.0.0"
+    "veles": "^1.1.0"
   },
   "devDependencies": {
     "husky": "^9.1.7",

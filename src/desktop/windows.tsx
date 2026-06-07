@@ -1,4 +1,4 @@
-import { appState$, type Window } from "../state";
+import { appState$, type Window, type AppId } from "../state";
 
 import type { State } from "veles";
 
@@ -17,12 +17,26 @@ function Window({ window$ }: { window$: State<Window> }) {
   return (
     <div
       class="window"
-      style={window$.attribute(
-        (window) =>
-          `left: ${window.position.x}px; top: ${window.position.y}px; width: ${window.size.width}px; height: ${window.size.height}px`,
-      )}
+      style={window$.attribute((window) => ({
+        left: `${window.position.x}px`,
+        top: `${window.position.y}px`,
+        width: `${window.size.width}px`,
+        height: `${window.size.height}px`,
+      }))}
     >
       {window$.render((value) => String(value.id))}
     </div>
   );
+}
+
+function Application({ appId }: { appId: AppId }) {
+  // choose the right application
+
+  switch (appId) {
+    case "settings":
+      return null;
+    default:
+      // TODO: add exhaustive check
+      return null;
+  }
 }
