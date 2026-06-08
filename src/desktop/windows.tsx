@@ -1,4 +1,4 @@
-import { windowState$, type Window, type AppId } from "../state/window";
+import { windowState$, type Window, type AppId, setActiveWindow } from "../state/window";
 import { Titlebar } from "./titlebar";
 
 import type { State } from "veles";
@@ -23,7 +23,11 @@ function Window({ window$ }: { window$: State<Window> }) {
         top: `${window.position.y}px`,
         width: `${window.size.width}px`,
         height: `${window.size.height}px`,
+        "z-index": window.zIndex,
       }))}
+      onClick={() => {
+        setActiveWindow(window$.get().id);
+      }}
     >
       <Titlebar window$={window$} />
       {window$.render((value) => String(value.id))}

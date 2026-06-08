@@ -1,11 +1,13 @@
 import { createRef, type State } from "veles";
 
-import { moveWindow, type Window } from "../state/window";
+import { moveWindow, type Window, setActiveWindow } from "../state/window";
 
 export function Titlebar({ window$ }: { window$: State<Window> }) {
   const ref = createRef<HTMLDivElement>();
 
   function onMouseDown(e: MouseEvent) {
+    setActiveWindow(window$.get().id);
+
     const startingX = e.clientX;
     const startingY = e.clientY;
 
