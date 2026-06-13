@@ -1,6 +1,6 @@
 import { expect, test, describe } from "vitest";
 
-import { generateBoard, type Row } from "./generate-board";
+import { generateBoard } from "./generate-board";
 
 // validates both rows and columns
 function validateRow(row: number[]): boolean {
