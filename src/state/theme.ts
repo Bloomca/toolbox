@@ -15,7 +15,7 @@ const defaultTheme: Theme = {
   id: "light",
   backgroundColour: "#b9cce9",
   iconSelectColour: "#6161b8",
-  windowBackgroundColour: "rgb(180 200 50 / 37%)",
+  windowBackgroundColour: "rgb(207 219 127)",
 };
 
 export const themeState$ = createState<State>({
