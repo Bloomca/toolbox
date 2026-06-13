@@ -32,6 +32,8 @@ body {
   justify-content: center;
   user-select: none;
   overflow: hidden;
+  margin-right: 16px;
+  margin-bottom: 16px;
 }
 
 .app-icon:hover {

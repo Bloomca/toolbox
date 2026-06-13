@@ -4,6 +4,7 @@ export function AppIcons() {
   return (
     <div class="app-icons-container">
       <AppIcon name="Settings" appId="settings" />
+      <AppIcon name="Sudoku" appId="sudoku" />
     </div>
   );
 }

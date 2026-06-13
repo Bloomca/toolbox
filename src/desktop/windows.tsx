@@ -1,6 +1,8 @@
 import { windowState$, type Window, type AppId, setActiveWindow } from "../state/window";
 import { Titlebar } from "./titlebar";
 
+import { SudokuApp } from "../apps/sudoku";
+
 import type { State } from "veles";
 
 export function Windows() {
@@ -30,7 +32,9 @@ function Window({ window$ }: { window$: State<Window> }) {
       }}
     >
       <Titlebar window$={window$} />
-      {window$.render((value) => String(value.id))}
+      {window$.render((value) => (
+        <Application appId={value.appId} />
+      ))}
     </div>
   );
 }
@@ -41,6 +45,8 @@ function Application({ appId }: { appId: AppId }) {
   switch (appId) {
     case "settings":
       return null;
+    case "sudoku":
+      return <SudokuApp />;
     default:
       // TODO: add exhaustive check
       return null;

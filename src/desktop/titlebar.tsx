@@ -32,7 +32,7 @@ export function Titlebar({ window$ }: { window$: State<Window> }) {
 
   return (
     <div ref={ref} class="titlebar" onMouseDown={onMouseDown}>
-      {"Title"}
+      {window$.renderSelected((value) => value.appId)}
 
       <button class="icon-button" onClick={() => closeWindow(window$.get().id)}>
         X
