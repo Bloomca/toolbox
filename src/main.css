@@ -35,11 +35,11 @@ body {
 }
 
 .app-icon:hover {
-  background-color: #6161b8;
+  background-color: var(--icon-select-colour);
 }
 
 .window {
   position: absolute;
   border: 1px solid grey;
-  background: rgba(0, 0, 0, 0.75);
+  background-color: var(--window-background-colour);
 }
