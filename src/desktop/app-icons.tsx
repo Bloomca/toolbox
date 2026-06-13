@@ -2,7 +2,7 @@ import { openApp, type AppId } from "../state/window";
 
 export function AppIcons() {
   return (
-    <div>
+    <div class="app-icons-container">
       <AppIcon name="Settings" appId="settings" />
     </div>
   );

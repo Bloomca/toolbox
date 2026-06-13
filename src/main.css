@@ -17,13 +17,23 @@ body {
   background-color: burlywood;
 }
 
+.app-icons-container {
+  padding: 16px;
+}
+
 .app-icon {
-  width: 32px;
-  height: 32px;
+  width: 64px;
+  height: 64px;
+  border: 1px dotted #333;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  overflow: hidden;
 }
 
 .app-icon:hover {
-  background-color: blue;
+  background-color: #6161b8;
 }
 
 .window {
