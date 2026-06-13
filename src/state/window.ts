@@ -91,3 +91,11 @@ export function setActiveWindow(id: number) {
     activeWindow: id,
   }));
 }
+
+export function closeWindow(id: number) {
+  windowState$.update((state) => ({
+    ...state,
+    windows: state.windows.filter((window) => window.id !== id),
+    activeWindow: state.activeWindow === id ? null : state.activeWindow,
+  }));
+}

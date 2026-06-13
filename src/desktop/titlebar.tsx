@@ -1,6 +1,6 @@
 import { createRef, type State } from "veles";
 
-import { moveWindow, type Window, setActiveWindow } from "../state/window";
+import { moveWindow, type Window, setActiveWindow, closeWindow } from "../state/window";
 
 export function Titlebar({ window$ }: { window$: State<Window> }) {
   const ref = createRef<HTMLDivElement>();
@@ -33,6 +33,10 @@ export function Titlebar({ window$ }: { window$: State<Window> }) {
   return (
     <div ref={ref} class="titlebar" onMouseDown={onMouseDown}>
       {"Title"}
+
+      <button class="icon-button" onClick={() => closeWindow(window$.get().id)}>
+        X
+      </button>
     </div>
   );
 }
