@@ -21,7 +21,8 @@
   "lint-staged": {
     "*.{js,jsx,ts,tsx,mjs,cjs,mts,cts}": [
       "oxfmt --write",
-      "oxlint"
+      "oxlint",
+      "vitest related --run --passWithNoTests"
     ],
     "*.{json,jsonc,css}": [
       "oxfmt --write"
