@@ -2,47 +2,46 @@ type Row = [number, number, number, number, number, number, number, number, numb
 type Grid = [Row, Row, Row, Row, Row, Row, Row, Row, Row];
 
 export function generateBoard(): Grid {
-  const rows: Row[] = [];
-  for (let i = 0; i < 9; i++) {
-    const newRow = generateRow(rows);
-    rows.push(newRow);
-  }
+  const board: number[][] = Array.from({ length: 9 }, () => Array(9).fill(0));
 
-  return rows as Grid;
-}
+  function fillCell(cellIndex: number = 0): boolean {
+    if (cellIndex === 81) return true;
 
-export function generateRow(previousRows: Row[]): Row {
-  const columns = generateExistingColumns(previousRows);
-  const squares = generateExistingSquares(previousRows);
-  const row: number[] = [];
-  const remaining = new Set([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+    const row = Math.floor(cellIndex / 9);
+    const col = cellIndex % 9;
 
-  function fillColumn(col: number = 0): boolean {
-    if (col === 9) return true;
-
-    const candidates = shuffle(
-      [...remaining].filter((n) => !columns[col].has(n) && !squares[Math.floor(col / 3)].has(n)),
-    );
+    const candidates = getCandidates(row, col);
 
     for (const candidate of candidates) {
-      row[col] = candidate;
-      remaining.delete(candidate);
+      board[row][col] = candidate;
 
-      // this means that we found a valid combination
-      if (fillColumn(col + 1)) return true;
+      if (fillCell(cellIndex + 1)) return true;
 
-      // this means that the candidate is not suitable
-      // so we are trying the next candidate
-      remaining.add(candidate);
-      delete row[col];
+      board[row][col] = 0;
     }
 
     return false;
   }
 
-  if (!fillColumn()) throw new Error("Could not generate a row");
+  function getCandidates(row: number, col: number): number[] {
+    const previousRows = board.slice(0, row) as Row[];
+    const existingColumns = generateExistingColumns(previousRows);
+    const existingSquares = generateExistingSquares(previousRows);
+    const existingRow = new Set(board[row]);
 
-  return row as Row;
+    return shuffle(
+      [1, 2, 3, 4, 5, 6, 7, 8, 9].filter(
+        (value) =>
+          !existingRow.has(value) &&
+          !existingColumns[col].has(value) &&
+          !existingSquares[Math.floor(col / 3)].has(value),
+      ),
+    );
+  }
+
+  if (!fillCell()) throw new Error("Could not generate a board");
+
+  return board as Grid;
 }
 
 function generateExistingColumns(previousRows: Row[]): Set<number>[] {
