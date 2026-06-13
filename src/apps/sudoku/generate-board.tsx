@@ -13,13 +13,16 @@ export function generateBoard(): Grid {
 
 export function generateRow(previousRows: Row[]): Row {
   const columns = generateExistingColumns(previousRows);
+  const squares = generateExistingSquares(previousRows);
   const row: number[] = [];
   const remaining = new Set([1, 2, 3, 4, 5, 6, 7, 8, 9]);
 
   function fillColumn(col: number = 0): boolean {
     if (col === 9) return true;
 
-    const candidates = shuffle([...remaining].filter((n) => !columns[col].has(n)));
+    const candidates = shuffle(
+      [...remaining].filter((n) => !columns[col].has(n) && !squares[Math.floor(col / 3)].has(n)),
+    );
 
     for (const candidate of candidates) {
       row[col] = candidate;
@@ -53,6 +56,22 @@ function generateExistingColumns(previousRows: Row[]): Set<number>[] {
     }
 
     result.push(set);
+  }
+
+  return result;
+}
+
+function generateExistingSquares(previousRows: Row[]): Set<number>[] {
+  const result: Set<number>[] = [new Set(), new Set(), new Set()];
+
+  const relevantRows = previousRows.slice(Math.floor(previousRows.length / 3) * 3);
+
+  for (const row of relevantRows) {
+    for (let i = 0; i < 9; i++) {
+      const value = row[i];
+      const setNumber = Math.floor(i / 3);
+      result[setNumber].add(value);
+    }
   }
 
   return result;
