@@ -32,9 +32,12 @@ function Window({ window$ }: { window$: State<Window> }) {
       }}
     >
       <Titlebar window$={window$} />
-      {window$.render((value) => (
-        <Application appId={value.appId} />
-      ))}
+      {window$.renderSelected(
+        (value) => value.appId,
+        (appId) => (
+          <Application appId={appId} />
+        ),
+      )}
     </div>
   );
 }

@@ -51,8 +51,8 @@ export function openApp({ appId }: { appId: AppId }) {
         y: 150,
       },
       size: {
-        width: 500,
-        height: 400,
+        width: 600,
+        height: 640,
       },
       appId,
       zIndex: zIndex++,

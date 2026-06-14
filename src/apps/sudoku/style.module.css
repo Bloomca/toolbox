@@ -1,0 +1,38 @@
+.board {
+  display: grid;
+  grid-template-columns: repeat(9, 1fr);
+  grid-template-rows: repeat(9, 1fr);
+  aspect-ratio: 1;
+  margin: 8px;
+  width: calc(100% - 16px);
+  box-sizing: border-box;
+  border: 2px solid black;
+}
+
+.cell {
+  font-size: 1.2rem;
+  display: grid;
+  place-items: center;
+  border-left: 1px solid #aaa;
+  border-top: 1px solid #aaa;
+}
+
+/* no duplicate border at outer top/left */
+.cell:nth-child(-n + 9) {
+  border-top: none;
+}
+
+.cell:nth-child(9n + 1) {
+  border-left: none;
+}
+
+/* thick vertical Sudoku borders before columns 4 and 7 */
+.cell:nth-child(3n + 1):not(:nth-child(9n + 1)) {
+  border-left: 2px solid black;
+}
+
+/* thick horizontal Sudoku borders before rows 4 and 7 */
+.cell:nth-child(n + 28):nth-child(-n + 36),
+.cell:nth-child(n + 55):nth-child(-n + 63) {
+  border-top: 2px solid black;
+}
