@@ -59,9 +59,22 @@
 }
 
 .controls {
+  margin-left: 8px;
+  margin-top: 8px;
   display: flex;
+  gap: 8px;
 }
 
 .withErrors {
   background: #ccc;
+}
+
+.menu {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 200px;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 48px;
 }

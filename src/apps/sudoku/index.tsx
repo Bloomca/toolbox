@@ -1,4 +1,4 @@
-import { createState } from "veles";
+import { createRef, createState } from "veles";
 
 import { generatePuzzle, type SudokuPuzzle, type GeneratePuzzleOptions } from "./puzzle-generator";
 
@@ -64,7 +64,7 @@ function DifficultyScreen({ onBoardCreated }: { onBoardCreated: (board: SudokuPu
     }
   }
   return (
-    <div>
+    <div class={styles.menu}>
       <button onClick={() => createBoard("easy")}>Easy</button>
       <button onClick={() => createBoard("normal")}>Normal</button>
       <button onClick={() => createBoard("hard")}>Hard</button>
@@ -98,14 +98,25 @@ function Board({ board }: { board: SudokuPuzzle }) {
 }
 
 function EditableCell({ row, col }: { row: number; col: number }) {
-  const edits$ = state$.map((state) => state.edits);
+  const address = `${row}:${col}`;
+  const inputRef = createRef<HTMLInputElement>();
+  const value$ = state$.map((state) => state.edits[address] ?? "");
   const hasError$ = state$.map((state) => {
     if (!state.showErrors) return false;
-    const editValue = Number(state.edits[`${row}:${col}`]);
+    const editValue = Number(state.edits[address]);
     if (!editValue) return false;
 
     return editValue !== state.board?.solution[row][col];
   });
+
+  value$.track(
+    (value) => {
+      if (inputRef.current && inputRef.current.value !== value) {
+        inputRef.current.value = value;
+      }
+    },
+    { callOnMount: true },
+  );
   return (
     <div
       class={hasError$.attribute(
@@ -113,13 +124,14 @@ function EditableCell({ row, col }: { row: number; col: number }) {
       )}
     >
       <input
+        ref={inputRef}
         class={styles.input}
         type="text"
-        value={edits$.attribute((edits) => edits[`${row}:${col}`] ?? " ")}
+        value={value$.attribute()}
         onInput={(e) =>
           state$.update((state) => ({
             ...state,
-            edits: { ...state.edits, [`${row}:${col}`]: e.target.value },
+            edits: { ...state.edits, [address]: e.target.value },
           }))
         }
       />
@@ -160,7 +172,7 @@ function Controls() {
   }
 
   return (
-    <div>
+    <div class={styles.controls}>
       <button
         class={state$.attribute((state) => (state.showErrors ? styles.withErrors : null))}
         onClick={toggleErrors}
