@@ -17,6 +17,10 @@ body {
 .titlebar {
   width: 100%;
   height: 32px;
+  line-height: 32px;
+  padding-left: 8px;
+  text-transform: capitalize;
+  box-sizing: border-box;
   background-color: burlywood;
   display: flex;
   justify-content: space-between;
