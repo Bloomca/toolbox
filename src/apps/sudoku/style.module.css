@@ -36,3 +36,12 @@
 .cell:nth-child(n + 55):nth-child(-n + 63) {
   border-top: 2px solid black;
 }
+
+.input {
+  width: 100%;
+  background: none;
+  border: none;
+  height: 100%;
+  text-align: center;
+  font-size: 1.2rem;
+}

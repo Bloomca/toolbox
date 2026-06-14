@@ -4,19 +4,22 @@ import { generatePuzzle, type SudokuPuzzle, type GeneratePuzzleOptions } from ".
 
 import styles from "./style.module.css";
 
-export function SudokuApp() {
-  const state$ = createState<{ board: SudokuPuzzle | null }>({
-    board: null,
-  });
+const state$ = createState<{ board: SudokuPuzzle | null; edits: { [address: string]: string } }>({
+  board: null,
+  edits: {},
+});
 
+export function SudokuApp() {
   function onBoardCreated(board: SudokuPuzzle) {
     state$.update((value) => ({ ...value, board }));
   }
 
   return (
     <div>
-      {state$.render(({ board }) =>
-        board ? <Board board={board} /> : <DifficultyScreen onBoardCreated={onBoardCreated} />,
+      {state$.renderSelected(
+        (state) => state.board,
+        (board) =>
+          board ? <Board board={board} /> : <DifficultyScreen onBoardCreated={onBoardCreated} />,
       )}
     </div>
   );
@@ -65,9 +68,38 @@ function DifficultyScreen({ onBoardCreated }: { onBoardCreated: (board: SudokuPu
 function Board({ board }: { board: SudokuPuzzle }) {
   return (
     <div class={styles.board}>
-      {board.puzzle.flatMap((row) =>
-        row.map((value) => <div class={styles.cell}>{value === 0 ? "" : value}</div>),
+      {board.puzzle.flatMap((row, rowIndex) =>
+        row.map((value, columnIndex) =>
+          value === 0 ? (
+            <EditableCell row={rowIndex} col={columnIndex} />
+          ) : (
+            <RegularCell value={value} />
+          ),
+        ),
       )}
     </div>
   );
+}
+
+function EditableCell({ row, col }: { row: number; col: number }) {
+  const edits$ = state$.map((state) => state.edits);
+  return (
+    <div class={styles.cell}>
+      <input
+        class={styles.input}
+        type="text"
+        value={edits$.attribute((edits) => edits[`${row}:${col}`] ?? "")}
+        onInput={(e) =>
+          state$.update((state) => ({
+            ...state,
+            edits: { ...state.edits, [`${row}:${col}`]: e.target.value },
+          }))
+        }
+      />
+    </div>
+  );
+}
+
+function RegularCell({ value }: { value: number }) {
+  return <div class={styles.cell}>{value}</div>;
 }
