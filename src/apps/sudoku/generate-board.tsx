@@ -1,7 +1,8 @@
-type Row = [number, number, number, number, number, number, number, number, number];
-type Grid = [Row, Row, Row, Row, Row, Row, Row, Row, Row];
+import { generateExistingColumns, generateExistingSquares } from "./utils";
 
-export function generateBoard(): Grid {
+import type { SudokuGrid, SudokuRow } from "./types";
+
+export function generateBoard(): SudokuGrid {
   const board: number[][] = Array.from({ length: 9 }, () => Array(9).fill(0));
 
   function fillCell(cellIndex: number = 0): boolean {
@@ -24,7 +25,7 @@ export function generateBoard(): Grid {
   }
 
   function getCandidates(row: number, col: number): number[] {
-    const previousRows = board.slice(0, row) as Row[];
+    const previousRows = board.slice(0, row) as SudokuRow[];
     const existingColumns = generateExistingColumns(previousRows);
     const existingSquares = generateExistingSquares(previousRows);
     const existingRow = new Set(board[row]);
@@ -41,39 +42,7 @@ export function generateBoard(): Grid {
 
   if (!fillCell()) throw new Error("Could not generate a board");
 
-  return board as Grid;
-}
-
-function generateExistingColumns(previousRows: Row[]): Set<number>[] {
-  const result: Set<number>[] = [];
-
-  for (let i = 0; i < 9; i++) {
-    const set = new Set<number>();
-
-    for (const row of previousRows) {
-      set.add(row[i]);
-    }
-
-    result.push(set);
-  }
-
-  return result;
-}
-
-function generateExistingSquares(previousRows: Row[]): Set<number>[] {
-  const result: Set<number>[] = [new Set(), new Set(), new Set()];
-
-  const relevantRows = previousRows.slice(Math.floor(previousRows.length / 3) * 3);
-
-  for (const row of relevantRows) {
-    for (let i = 0; i < 9; i++) {
-      const value = row[i];
-      const setNumber = Math.floor(i / 3);
-      result[setNumber].add(value);
-    }
-  }
-
-  return result;
+  return board as SudokuGrid;
 }
 
 function shuffle<T>(arr: T[]) {
