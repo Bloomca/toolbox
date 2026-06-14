@@ -50,6 +50,18 @@
   background-color: rgb(from var(--icon-select-colour) r g b / 0.15);
 }
 
+.errorCell {
+  background-color: rgb(255 43 43 / 61%);
+}
+
 .completed {
   background-color: green;
+}
+
+.controls {
+  display: flex;
+}
+
+.withErrors {
+  background: #ccc;
 }

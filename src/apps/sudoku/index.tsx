@@ -7,11 +7,13 @@ import styles from "./style.module.css";
 type State = {
   board: SudokuPuzzle | null;
   edits: { [address: string]: string };
+  showErrors: boolean;
 };
 
 const state$ = createState<State>({
   board: null,
   edits: {},
+  showErrors: false,
 });
 
 export function SudokuApp() {
@@ -74,32 +76,46 @@ function Board({ board }: { board: SudokuPuzzle }) {
   const solved$ = state$.map(isPuzzleSolved);
 
   return (
-    <div
-      class={solved$.attribute(
-        (isSolved) => `${styles.board} ${isSolved ? styles.completed : null}`,
-      )}
-    >
-      {board.puzzle.flatMap((row, rowIndex) =>
-        row.map((value, columnIndex) =>
-          value === 0 ? (
-            <EditableCell row={rowIndex} col={columnIndex} />
-          ) : (
-            <RegularCell value={value} />
+    <div>
+      <Controls />
+      <div
+        class={solved$.attribute(
+          (isSolved) => `${styles.board} ${isSolved ? styles.completed : null}`,
+        )}
+      >
+        {board.puzzle.flatMap((row, rowIndex) =>
+          row.map((value, columnIndex) =>
+            value === 0 ? (
+              <EditableCell row={rowIndex} col={columnIndex} />
+            ) : (
+              <RegularCell value={value} />
+            ),
           ),
-        ),
-      )}
+        )}
+      </div>
     </div>
   );
 }
 
 function EditableCell({ row, col }: { row: number; col: number }) {
   const edits$ = state$.map((state) => state.edits);
+  const hasError$ = state$.map((state) => {
+    if (!state.showErrors) return false;
+    const editValue = Number(state.edits[`${row}:${col}`]);
+    if (!editValue) return false;
+
+    return editValue !== state.board?.solution[row][col];
+  });
   return (
-    <div class={`${styles.cell} ${styles.editableCell}`}>
+    <div
+      class={hasError$.attribute(
+        (hasError) => `${styles.cell} ${styles.editableCell} ${hasError ? styles.errorCell : ""}`,
+      )}
+    >
       <input
         class={styles.input}
         type="text"
-        value={edits$.attribute((edits) => edits[`${row}:${col}`] ?? "")}
+        value={edits$.attribute((edits) => edits[`${row}:${col}`] ?? " ")}
         onInput={(e) =>
           state$.update((state) => ({
             ...state,
@@ -128,4 +144,31 @@ function isPuzzleSolved({ board, edits }: State): boolean {
   }
 
   return true;
+}
+
+function Controls() {
+  function toggleErrors() {
+    state$.update((state) => ({ ...state, showErrors: !state.showErrors }));
+  }
+
+  function resetBoard() {
+    state$.update((state) => ({ ...state, edits: {} }));
+  }
+
+  function quitBoard() {
+    state$.set({ board: null, edits: {}, showErrors: false });
+  }
+
+  return (
+    <div>
+      <button
+        class={state$.attribute((state) => (state.showErrors ? styles.withErrors : null))}
+        onClick={toggleErrors}
+      >
+        Show errors
+      </button>
+      <button onClick={resetBoard}>Reset board</button>
+      <button onClick={quitBoard}>Quit board</button>
+    </div>
+  );
 }
