@@ -45,3 +45,11 @@
   text-align: center;
   font-size: 1.2rem;
 }
+
+.editableCell {
+  background-color: rgb(from var(--icon-select-colour) r g b / 0.15);
+}
+
+.completed {
+  background-color: green;
+}

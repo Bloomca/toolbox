@@ -4,7 +4,12 @@ import { generatePuzzle, type SudokuPuzzle, type GeneratePuzzleOptions } from ".
 
 import styles from "./style.module.css";
 
-const state$ = createState<{ board: SudokuPuzzle | null; edits: { [address: string]: string } }>({
+type State = {
+  board: SudokuPuzzle | null;
+  edits: { [address: string]: string };
+};
+
+const state$ = createState<State>({
   board: null,
   edits: {},
 });
@@ -66,8 +71,14 @@ function DifficultyScreen({ onBoardCreated }: { onBoardCreated: (board: SudokuPu
 }
 
 function Board({ board }: { board: SudokuPuzzle }) {
+  const solved$ = state$.map(isPuzzleSolved);
+
   return (
-    <div class={styles.board}>
+    <div
+      class={solved$.attribute(
+        (isSolved) => `${styles.board} ${isSolved ? styles.completed : null}`,
+      )}
+    >
       {board.puzzle.flatMap((row, rowIndex) =>
         row.map((value, columnIndex) =>
           value === 0 ? (
@@ -84,7 +95,7 @@ function Board({ board }: { board: SudokuPuzzle }) {
 function EditableCell({ row, col }: { row: number; col: number }) {
   const edits$ = state$.map((state) => state.edits);
   return (
-    <div class={styles.cell}>
+    <div class={`${styles.cell} ${styles.editableCell}`}>
       <input
         class={styles.input}
         type="text"
@@ -102,4 +113,19 @@ function EditableCell({ row, col }: { row: number; col: number }) {
 
 function RegularCell({ value }: { value: number }) {
   return <div class={styles.cell}>{value}</div>;
+}
+
+function isPuzzleSolved({ board, edits }: State): boolean {
+  if (!board) return false;
+  for (let row = 0; row < 9; row++) {
+    for (let col = 0; col < 9; col++) {
+      if (board.puzzle[row][col] === 0) {
+        if (board.solution[row][col] !== Number(edits[`${row}:${col}`])) {
+          return false;
+        }
+      }
+    }
+  }
+
+  return true;
 }
