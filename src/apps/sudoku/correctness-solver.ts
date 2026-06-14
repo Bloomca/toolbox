@@ -1,12 +1,8 @@
-import { generateExistingColumns, generateExistingSquares } from "./utils";
+import { cloneGrid, generateExistingColumns } from "./utils";
 
 import type { SudokuCell, SudokuGrid } from "./types";
 
-function cloneGrid(board: SudokuGrid): SudokuGrid {
-  return board.map((row) => [...row]) as SudokuGrid;
-}
-
-export function countSolutions(_board: SudokuGrid, _maxSolutions: number = 2): number {
+export function countSolutions(_board: SudokuGrid, maxSolutions: number = 2): number {
   const board = cloneGrid(_board);
   if (!isValidBoard(board)) return 0;
 
@@ -35,7 +31,7 @@ export function countSolutions(_board: SudokuGrid, _maxSolutions: number = 2): n
       board[row][col] = candidate;
 
       fillCell(index + 1);
-      if (solutions >= _maxSolutions) return;
+      if (solutions >= maxSolutions) return;
 
       board[row][col] = 0;
     }
@@ -45,18 +41,13 @@ export function countSolutions(_board: SudokuGrid, _maxSolutions: number = 2): n
 
   function getCandidates(row: number, col: number): SudokuCell[] {
     const existingColumns = generateExistingColumns(board);
-    const squareRowStart = Math.floor(row / 3) * 3;
-    const existingSquares = generateExistingSquares(
-      board.slice(squareRowStart, squareRowStart + 3),
-    );
+    const existingSquare = getSquareValues(board, row, col);
     const existingRow = new Set(board[row]);
 
     const options: SudokuCell[] = [1, 2, 3, 4, 5, 6, 7, 8, 9];
     return options.filter(
       (value) =>
-        !existingRow.has(value) &&
-        !existingColumns[col].has(value) &&
-        !existingSquares[Math.floor(col / 3)].has(value),
+        !existingRow.has(value) && !existingColumns[col].has(value) && !existingSquare.has(value),
     );
   }
 
@@ -67,6 +58,20 @@ export function countSolutions(_board: SudokuGrid, _maxSolutions: number = 2): n
 
 export function hasUniqueSolution(_board: SudokuGrid): boolean {
   return countSolutions(_board) === 1;
+}
+
+function getSquareValues(board: SudokuGrid, row: number, col: number): Set<SudokuCell> {
+  const result = new Set<SudokuCell>();
+  const rowStart = Math.floor(row / 3) * 3;
+  const colStart = Math.floor(col / 3) * 3;
+
+  for (let currentRow = rowStart; currentRow < rowStart + 3; currentRow++) {
+    for (let currentCol = colStart; currentCol < colStart + 3; currentCol++) {
+      result.add(board[currentRow][currentCol]);
+    }
+  }
+
+  return result;
 }
 
 function isValidBoard(board: SudokuGrid): boolean {

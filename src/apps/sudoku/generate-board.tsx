@@ -1,4 +1,4 @@
-import { generateExistingColumns, generateExistingSquares } from "./utils";
+import { generateExistingColumns, generateExistingSquares, shuffle } from "./utils";
 
 import type { SudokuGrid, SudokuRow } from "./types";
 
@@ -43,22 +43,4 @@ export function generateBoard(): SudokuGrid {
   if (!fillCell()) throw new Error("Could not generate a board");
 
   return board as SudokuGrid;
-}
-
-function shuffle<T>(arr: T[]) {
-  const newArray: T[] = [];
-  while (arr.length) {
-    const element = pickRandomElementFromArray(arr);
-    newArray.push(element);
-  }
-
-  return newArray;
-}
-
-function pickRandomElementFromArray<T>(array: T[]): T {
-  const index = Math.floor(Math.random() * array.length);
-  const number = array[index];
-  array.splice(index, 1);
-
-  return number;
 }
