@@ -1,11 +1,18 @@
 import { countSolutions } from "./correctness-solver";
 import { generateBoard } from "./generate-board";
+import { solveWithTechniques } from "./human-solver";
 import { cloneGrid, shuffle } from "./utils";
 
 import type { SudokuGrid } from "./types";
+import type { SudokuTechnique } from "./human-solver";
+
+export type GeneratePuzzleConstraints = {
+  minimumClues?: number;
+  allowedTechniques?: readonly SudokuTechnique[];
+};
 
 export type GeneratePuzzleOptions = {
-  targetClues?: number;
+  constraints?: GeneratePuzzleConstraints;
   solution?: SudokuGrid;
 };
 
@@ -21,20 +28,24 @@ type CellPosition = {
 };
 
 export function generatePuzzle(options: GeneratePuzzleOptions = {}): SudokuPuzzle {
-  const targetClues = options.targetClues ?? 40;
-  validateTargetClues(targetClues);
+  const minimumClues = options.constraints?.minimumClues ?? 40;
+  const allowedTechniques = options.constraints?.allowedTechniques ?? [];
+  validateMinimumClues(minimumClues);
 
   const solution = options.solution ? cloneGrid(options.solution) : generateBoard();
   const puzzle = cloneGrid(solution);
   let clues = 81;
 
   for (const { row, col } of shuffle(generateCellPositions())) {
-    if (clues <= targetClues) break;
+    if (clues <= minimumClues) break;
 
     const previousValue = puzzle[row][col];
     puzzle[row][col] = 0;
 
-    if (countSolutions(puzzle) === 1) {
+    if (
+      countSolutions(puzzle, 2) === 1 &&
+      satisfiesTechniqueConstraints(puzzle, allowedTechniques)
+    ) {
       clues--;
     } else {
       puzzle[row][col] = previousValue;
@@ -60,8 +71,17 @@ function generateCellPositions(): CellPosition[] {
   return positions;
 }
 
-function validateTargetClues(targetClues: number) {
-  if (!Number.isInteger(targetClues) || targetClues < 0 || targetClues > 81) {
-    throw new Error("targetClues must be an integer between 0 and 81");
+function satisfiesTechniqueConstraints(
+  puzzle: SudokuGrid,
+  allowedTechniques: readonly SudokuTechnique[],
+): boolean {
+  if (allowedTechniques.length === 0) return true;
+
+  return solveWithTechniques(puzzle, allowedTechniques).solved;
+}
+
+function validateMinimumClues(minimumClues: number) {
+  if (!Number.isInteger(minimumClues) || minimumClues < 0 || minimumClues > 81) {
+    throw new Error("minimumClues must be an integer between 0 and 81");
   }
 }

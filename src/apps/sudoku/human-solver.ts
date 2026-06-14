@@ -49,6 +49,18 @@ export type SudokuEliminationMove = {
 
 export type SudokuMove = SudokuPlacementMove | SudokuEliminationMove;
 
+export type HumanSolveResult = {
+  solved: boolean;
+  board: SudokuGrid;
+  steps: SudokuMove[];
+};
+
+type CandidateGrid = SudokuDigit[][][];
+
+type UnitDefinition = SudokuUnit & {
+  cells: CellPosition[];
+};
+
 const digits: SudokuDigit[] = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 
 export const easyTechniques: readonly SudokuTechnique[] = [
@@ -64,15 +76,38 @@ export const normalTechniques: readonly SudokuTechnique[] = [
   "nakedPair",
 ];
 
+export function solveWithTechniques(
+  originalBoard: SudokuGrid,
+  techniques: readonly SudokuTechnique[] = normalTechniques,
+): HumanSolveResult {
+  const board = cloneGrid(originalBoard);
+  const candidates = createCandidateGrid(board);
+  const steps: SudokuMove[] = [];
+
+  while (!isSolved(board)) {
+    const moves = findMoves(board, techniques, candidates);
+    if (moves.length === 0) return { solved: false, board, steps };
+
+    const move = moves[0];
+    const didApplyMove = applyMove(board, candidates, move);
+    if (!didApplyMove) return { solved: false, board, steps };
+
+    steps.push(move);
+  }
+
+  return { solved: true, board, steps };
+}
+
 export function findMoves(
   board: SudokuGrid,
   techniques: readonly SudokuTechnique[] = easyTechniques,
+  candidates?: CandidateGrid,
 ): SudokuMove[] {
   const result: SudokuMove[] = [];
   const seenMoves = new Set<string>();
 
   for (const technique of techniques) {
-    const moves = findMovesForTechnique(board, technique);
+    const moves = findMovesForTechnique(board, technique, candidates);
 
     for (const move of moves) {
       const key = getDeduplicationKey(move);
@@ -86,7 +121,10 @@ export function findMoves(
   return result;
 }
 
-export function findFullHouseMoves(board: SudokuGrid): SudokuPlacementMove[] {
+export function findFullHouseMoves(
+  board: SudokuGrid,
+  candidates?: CandidateGrid,
+): SudokuPlacementMove[] {
   const result: SudokuPlacementMove[] = [];
   const seenMoves = new Set<string>();
 
@@ -99,7 +137,7 @@ export function findFullHouseMoves(board: SudokuGrid): SudokuPlacementMove[] {
 
     const [{ row, col }] = emptyCells;
     const [value] = missingDigits;
-    if (!getCandidates(board, row, col).includes(value)) continue;
+    if (!getCellCandidates(board, row, col, candidates).includes(value)) continue;
 
     addUniquePlacementMove(result, seenMoves, {
       technique: "fullHouse",
@@ -113,22 +151,28 @@ export function findFullHouseMoves(board: SudokuGrid): SudokuPlacementMove[] {
   return result;
 }
 
-export function findNakedSingleMoves(board: SudokuGrid): SudokuPlacementMove[] {
+export function findNakedSingleMoves(
+  board: SudokuGrid,
+  candidates?: CandidateGrid,
+): SudokuPlacementMove[] {
   const result: SudokuPlacementMove[] = [];
 
   for (let row = 0; row < 9; row++) {
     for (let col = 0; col < 9; col++) {
-      const candidates = getCandidates(board, row, col);
-      if (candidates.length !== 1) continue;
+      const cellCandidates = getCellCandidates(board, row, col, candidates);
+      if (cellCandidates.length !== 1) continue;
 
-      result.push({ technique: "nakedSingle", row, col, value: candidates[0] });
+      result.push({ technique: "nakedSingle", row, col, value: cellCandidates[0] });
     }
   }
 
   return result;
 }
 
-export function findHiddenSingleMoves(board: SudokuGrid): SudokuPlacementMove[] {
+export function findHiddenSingleMoves(
+  board: SudokuGrid,
+  candidates?: CandidateGrid,
+): SudokuPlacementMove[] {
   const result: SudokuPlacementMove[] = [];
   const seenMoves = new Set<string>();
 
@@ -139,7 +183,8 @@ export function findHiddenSingleMoves(board: SudokuGrid): SudokuPlacementMove[] 
       if (existingValues.has(digit)) continue;
 
       const possibleCells = unit.cells.filter(
-        ({ row, col }) => board[row][col] === 0 && getCandidates(board, row, col).includes(digit),
+        ({ row, col }) =>
+          board[row][col] === 0 && getCellCandidates(board, row, col, candidates).includes(digit),
       );
 
       if (possibleCells.length !== 1) continue;
@@ -158,7 +203,10 @@ export function findHiddenSingleMoves(board: SudokuGrid): SudokuPlacementMove[] 
   return result;
 }
 
-export function findPointingCandidateMoves(board: SudokuGrid): SudokuEliminationMove[] {
+export function findPointingCandidateMoves(
+  board: SudokuGrid,
+  candidates?: CandidateGrid,
+): SudokuEliminationMove[] {
   const result: SudokuEliminationMove[] = [];
   const seenMoves = new Set<string>();
   const squareUnits = getUnits().filter((unit) => unit.type === "square");
@@ -170,7 +218,8 @@ export function findPointingCandidateMoves(board: SudokuGrid): SudokuElimination
       if (existingValues.has(digit)) continue;
 
       const candidateCells = square.cells.filter(
-        ({ row, col }) => board[row][col] === 0 && getCandidates(board, row, col).includes(digit),
+        ({ row, col }) =>
+          board[row][col] === 0 && getCellCandidates(board, row, col, candidates).includes(digit),
       );
       if (candidateCells.length < 2) continue;
 
@@ -179,10 +228,17 @@ export function findPointingCandidateMoves(board: SudokuGrid): SudokuElimination
         addUniqueEliminationMove(
           result,
           seenMoves,
-          createPointingCandidateMove(board, square, candidateCells, digit, {
-            type: "row",
-            index: row,
-          }),
+          createPointingCandidateMove(
+            board,
+            square,
+            candidateCells,
+            digit,
+            {
+              type: "row",
+              index: row,
+            },
+            candidates,
+          ),
         );
       }
 
@@ -191,10 +247,17 @@ export function findPointingCandidateMoves(board: SudokuGrid): SudokuElimination
         addUniqueEliminationMove(
           result,
           seenMoves,
-          createPointingCandidateMove(board, square, candidateCells, digit, {
-            type: "column",
-            index: col,
-          }),
+          createPointingCandidateMove(
+            board,
+            square,
+            candidateCells,
+            digit,
+            {
+              type: "column",
+              index: col,
+            },
+            candidates,
+          ),
         );
       }
     }
@@ -203,7 +266,10 @@ export function findPointingCandidateMoves(board: SudokuGrid): SudokuElimination
   return result;
 }
 
-export function findBoxLineReductionMoves(board: SudokuGrid): SudokuEliminationMove[] {
+export function findBoxLineReductionMoves(
+  board: SudokuGrid,
+  candidates?: CandidateGrid,
+): SudokuEliminationMove[] {
   const result: SudokuEliminationMove[] = [];
   const seenMoves = new Set<string>();
   const lineUnits = getUnits().filter((unit) => unit.type === "row" || unit.type === "column");
@@ -215,14 +281,22 @@ export function findBoxLineReductionMoves(board: SudokuGrid): SudokuEliminationM
       if (existingValues.has(digit)) continue;
 
       const candidateCells = line.cells.filter(
-        ({ row, col }) => board[row][col] === 0 && getCandidates(board, row, col).includes(digit),
+        ({ row, col }) =>
+          board[row][col] === 0 && getCellCandidates(board, row, col, candidates).includes(digit),
       );
       if (candidateCells.length < 2) continue;
 
       const squareIndex = getSharedSquare(candidateCells);
       if (squareIndex === undefined) continue;
 
-      const move = createBoxLineReductionMove(board, line, candidateCells, digit, squareIndex);
+      const move = createBoxLineReductionMove(
+        board,
+        line,
+        candidateCells,
+        digit,
+        squareIndex,
+        candidates,
+      );
       addUniqueEliminationMove(result, seenMoves, move);
     }
   }
@@ -230,7 +304,10 @@ export function findBoxLineReductionMoves(board: SudokuGrid): SudokuEliminationM
   return result;
 }
 
-export function findNakedPairMoves(board: SudokuGrid): SudokuEliminationMove[] {
+export function findNakedPairMoves(
+  board: SudokuGrid,
+  candidates?: CandidateGrid,
+): SudokuEliminationMove[] {
   const result: SudokuEliminationMove[] = [];
   const seenMoves = new Set<string>();
 
@@ -239,14 +316,14 @@ export function findNakedPairMoves(board: SudokuGrid): SudokuEliminationMove[] {
     const valuesByKey = new Map<string, SudokuDigit[]>();
 
     for (const { row, col } of unit.cells) {
-      const candidates = getCandidates(board, row, col);
-      if (candidates.length !== 2) continue;
+      const cellCandidates = getCellCandidates(board, row, col, candidates);
+      if (cellCandidates.length !== 2) continue;
 
-      const key = candidates.join(":");
+      const key = cellCandidates.join(":");
       const cells = cellsByCandidates.get(key) ?? [];
       cells.push({ row, col });
       cellsByCandidates.set(key, cells);
-      valuesByKey.set(key, candidates);
+      valuesByKey.set(key, cellCandidates);
     }
 
     for (const [key, cells] of cellsByCandidates.entries()) {
@@ -258,7 +335,7 @@ export function findNakedPairMoves(board: SudokuGrid): SudokuEliminationMove[] {
       const eliminations = unit.cells
         .filter((cell) => !cells.some((pairCell) => isSameCell(pairCell, cell)))
         .flatMap(({ row, col }) =>
-          getCandidates(board, row, col)
+          getCellCandidates(board, row, col, candidates)
             .filter((candidate) => values.includes(candidate))
             .map((value) => ({ row, col, value })),
         );
@@ -290,18 +367,18 @@ export function getCandidates(board: SudokuGrid, row: number, col: number): Sudo
   return digits.filter((digit) => !existingValues.has(digit));
 }
 
-type UnitDefinition = SudokuUnit & {
-  cells: CellPosition[];
-};
+function findMovesForTechnique(
+  board: SudokuGrid,
+  technique: SudokuTechnique,
+  candidates?: CandidateGrid,
+): SudokuMove[] {
+  if (technique === "fullHouse") return findFullHouseMoves(board, candidates);
+  if (technique === "nakedSingle") return findNakedSingleMoves(board, candidates);
+  if (technique === "hiddenSingle") return findHiddenSingleMoves(board, candidates);
+  if (technique === "pointingCandidates") return findPointingCandidateMoves(board, candidates);
+  if (technique === "boxLineReduction") return findBoxLineReductionMoves(board, candidates);
 
-function findMovesForTechnique(board: SudokuGrid, technique: SudokuTechnique): SudokuMove[] {
-  if (technique === "fullHouse") return findFullHouseMoves(board);
-  if (technique === "nakedSingle") return findNakedSingleMoves(board);
-  if (technique === "hiddenSingle") return findHiddenSingleMoves(board);
-  if (technique === "pointingCandidates") return findPointingCandidateMoves(board);
-  if (technique === "boxLineReduction") return findBoxLineReductionMoves(board);
-
-  return findNakedPairMoves(board);
+  return findNakedPairMoves(board, candidates);
 }
 
 function createPointingCandidateMove(
@@ -310,11 +387,13 @@ function createPointingCandidateMove(
   cells: CellPosition[],
   value: SudokuDigit,
   targetUnit: SudokuUnit,
+  candidates?: CandidateGrid,
 ): SudokuEliminationMove | undefined {
   const eliminations = getCellsForUnit(targetUnit)
     .filter((cell) => getSquareIndex(cell.row, cell.col) !== square.index)
     .filter(
-      ({ row, col }) => board[row][col] === 0 && getCandidates(board, row, col).includes(value),
+      ({ row, col }) =>
+        board[row][col] === 0 && getCellCandidates(board, row, col, candidates).includes(value),
     )
     .map(({ row, col }) => ({ row, col, value }));
 
@@ -336,11 +415,13 @@ function createBoxLineReductionMove(
   cells: CellPosition[],
   value: SudokuDigit,
   squareIndex: number,
+  candidates?: CandidateGrid,
 ): SudokuEliminationMove | undefined {
   const eliminations = getCellsForUnit({ type: "square", index: squareIndex })
     .filter((cell) => !line.cells.some((lineCell) => isSameCell(lineCell, cell)))
     .filter(
-      ({ row, col }) => board[row][col] === 0 && getCandidates(board, row, col).includes(value),
+      ({ row, col }) =>
+        board[row][col] === 0 && getCellCandidates(board, row, col, candidates).includes(value),
     )
     .map(({ row, col }) => ({ row, col, value }));
 
@@ -354,6 +435,70 @@ function createBoxLineReductionMove(
     value,
     eliminations,
   };
+}
+
+function applyMove(board: SudokuGrid, candidates: CandidateGrid, move: SudokuMove): boolean {
+  if (isPlacementMove(move)) return applyPlacementMove(board, candidates, move);
+
+  return applyEliminationMove(candidates, move);
+}
+
+function applyPlacementMove(
+  board: SudokuGrid,
+  candidates: CandidateGrid,
+  move: SudokuPlacementMove,
+): boolean {
+  if (board[move.row][move.col] !== 0) return false;
+
+  board[move.row][move.col] = move.value;
+  candidates[move.row][move.col] = [];
+
+  const peerCells = getPeerCells(move.row, move.col);
+  for (const { row, col } of peerCells) {
+    removeCandidate(candidates, row, col, move.value);
+  }
+
+  return true;
+}
+
+function applyEliminationMove(candidates: CandidateGrid, move: SudokuEliminationMove): boolean {
+  let didRemoveCandidate = false;
+
+  for (const { row, col, value } of move.eliminations) {
+    didRemoveCandidate = removeCandidate(candidates, row, col, value) || didRemoveCandidate;
+  }
+
+  return didRemoveCandidate;
+}
+
+function removeCandidate(
+  candidates: CandidateGrid,
+  row: number,
+  col: number,
+  value: SudokuDigit,
+): boolean {
+  const index = candidates[row][col].indexOf(value);
+  if (index === -1) return false;
+
+  candidates[row][col].splice(index, 1);
+  return true;
+}
+
+function createCandidateGrid(board: SudokuGrid): CandidateGrid {
+  return board.map((row, rowIndex) =>
+    row.map((_value, colIndex) => getCandidates(board, rowIndex, colIndex)),
+  );
+}
+
+function getCellCandidates(
+  board: SudokuGrid,
+  row: number,
+  col: number,
+  candidates?: CandidateGrid,
+): SudokuDigit[] {
+  if (!candidates) return getCandidates(board, row, col);
+
+  return candidates[row][col];
 }
 
 function getUnits(): UnitDefinition[] {
@@ -408,6 +553,22 @@ function getCellsForUnit(unit: SudokuUnit): CellPosition[] {
   return cells;
 }
 
+function getPeerCells(row: number, col: number): CellPosition[] {
+  const peers = new Map<string, CellPosition>();
+
+  for (const cell of [
+    ...getCellsForUnit({ type: "row", index: row }),
+    ...getCellsForUnit({ type: "column", index: col }),
+    ...getCellsForUnit({ type: "square", index: getSquareIndex(row, col) }),
+  ]) {
+    if (cell.row === row && cell.col === col) continue;
+
+    peers.set(`${cell.row}:${cell.col}`, cell);
+  }
+
+  return [...peers.values()];
+}
+
 function getColumnValues(board: SudokuGrid, col: number): SudokuCell[] {
   return board.map((row) => row[col]);
 }
@@ -457,6 +618,18 @@ function isSameCell(a: CellPosition, b: CellPosition): boolean {
   return a.row === b.row && a.col === b.col;
 }
 
+function isPlacementMove(move: SudokuMove): move is SudokuPlacementMove {
+  return "row" in move;
+}
+
+function isSolved(board: SudokuGrid): boolean {
+  return board.every((row) => row.every((value) => value !== 0));
+}
+
+function cloneGrid(board: SudokuGrid): SudokuGrid {
+  return board.map((row) => [...row]) as SudokuGrid;
+}
+
 function addUniquePlacementMove(
   moves: SudokuPlacementMove[],
   seenMoves: Set<string>,
@@ -483,10 +656,6 @@ function addUniqueEliminationMove(
   moves.push(move);
 }
 
-function isPlacementMove(move: SudokuMove): move is SudokuPlacementMove {
-  return "row" in move;
-}
-
 function getDeduplicationKey(move: SudokuMove): string {
   if (isPlacementMove(move)) return `placement:${getPlacementKey(move)}`;
 
@@ -506,5 +675,8 @@ function getPlacementKey(move: SudokuPlacementMove): string {
 }
 
 function getEliminationKey(eliminations: CandidateElimination[]): string {
-  return eliminations.map(({ row, col, value }) => `${row}:${col}:${value}`).join("|");
+  return eliminations
+    .map(({ row, col, value }) => `${row}:${col}:${value}`)
+    .sort()
+    .join("|");
 }
