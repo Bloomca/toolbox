@@ -18,12 +18,33 @@ body {
   width: 100%;
   height: 32px;
   line-height: 32px;
-  padding-left: 12px;
+  padding-left: 16px;
   text-transform: capitalize;
   box-sizing: border-box;
-  background-color: burlywood;
+  color: #2f211d;
+  background: linear-gradient(180deg, #f0cfa7 0%, #c79662 100%);
+  border-bottom: 1px solid #5f4634;
   display: flex;
   justify-content: space-between;
+  user-select: none;
+  cursor: grab;
+  text-shadow: 1px 1px rgb(255 255 255 / 0.35);
+  box-shadow: 0px 2px 2px #0000002e;
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.titlebar:active {
+  cursor: grabbing;
+}
+
+.window[data-active] .titlebar {
+  background: linear-gradient(180deg, #ebcca9 0%, #feb159 100%);
+}
+
+.window:not([data-active]) .titlebar {
+  color: rgb(47 33 29 / 0.72);
+  background: linear-gradient(180deg, #dcc5ab 0%, #aa8665 100%);
 }
 
 .app-icons-container {
@@ -49,7 +70,12 @@ body {
 
 .window {
   position: absolute;
-  border: 1px solid grey;
+  border: 1px solid #2f211d;
+  border-radius: 6px;
   background-color: var(--window-background-colour);
   overflow: auto;
+}
+
+.window[data-active] {
+  box-shadow: 6px 6px 6px rgb(87 72 72 / 33%);
 }
