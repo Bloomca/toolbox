@@ -57,7 +57,7 @@ export function openApp({ appId }: { appId: AppId }) {
       appId,
       zIndex: zIndex++,
     }),
-    activeWindow: state.activeWindow || newId,
+    activeWindow: newId,
   }));
 }
 

@@ -27,6 +27,7 @@ function Window({ window$ }: { window$: State<Window> }) {
         height: `${window.size.height}px`,
         "z-index": window.zIndex,
       }))}
+      data-active={windowState$.attribute((state) => state.activeWindow === window$.get().id)}
       onClick={() => {
         setActiveWindow(window$.get().id);
       }}
