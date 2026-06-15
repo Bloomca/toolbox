@@ -1,0 +1,46 @@
+[data-toolbox-button] {
+  user-select: none;
+  box-shadow:
+    2px 2px #c5af9b,
+    5px 5px rgb(87 72 72);
+  border: 1px solid black;
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    transform 60ms ease-out,
+    box-shadow 60ms ease-out,
+    background-color 60ms ease-out;
+}
+
+[data-toolbox-button-variant="default"][aria-pressed="true"] {
+  background: #ccc;
+  transform: translate(1px, 1px);
+  box-shadow:
+    1px 1px #c5af9b,
+    4px 4px rgb(87 72 72);
+}
+
+[data-toolbox-button-variant="default"]:active {
+  transform: translate(2px, 2px);
+  box-shadow:
+    0 0 #c5af9b,
+    3px 3px rgb(87 72 72);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-toolbox-button] {
+    transition: none;
+  }
+}
+
+[data-toolbox-button-variant="icon"] {
+  min-width: 32px;
+  height: 32px;
+  padding: 0 10px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  box-shadow: none;
+}

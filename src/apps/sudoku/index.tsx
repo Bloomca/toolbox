@@ -1,6 +1,7 @@
 import { createRef, createState } from "veles";
 
-import { generatePuzzle, type SudokuPuzzle, type GeneratePuzzleOptions } from "./puzzle-generator";
+import { Button } from "../../design/button";
+import { generatePuzzle, type SudokuPuzzle } from "./puzzle-generator";
 
 import styles from "./style.module.css";
 
@@ -65,9 +66,9 @@ function DifficultyScreen({ onBoardCreated }: { onBoardCreated: (board: SudokuPu
   }
   return (
     <div class={styles.menu}>
-      <button onClick={() => createBoard("easy")}>Easy</button>
-      <button onClick={() => createBoard("normal")}>Normal</button>
-      <button onClick={() => createBoard("hard")}>Hard</button>
+      <Button onClick={() => createBoard("easy")}>Easy</Button>
+      <Button onClick={() => createBoard("normal")}>Normal</Button>
+      <Button onClick={() => createBoard("hard")}>Hard</Button>
     </div>
   );
 }
@@ -173,14 +174,14 @@ function Controls() {
 
   return (
     <div class={styles.controls}>
-      <button
-        class={state$.attribute((state) => (state.showErrors ? styles.withErrors : null))}
+      <Button
+        aria-pressed={state$.attribute((state) => (state.showErrors ? "true" : "false"))}
         onClick={toggleErrors}
       >
         Show errors
-      </button>
-      <button onClick={resetBoard}>Reset board</button>
-      <button onClick={quitBoard}>Quit board</button>
+      </Button>
+      <Button onClick={resetBoard}>Reset board</Button>
+      <Button onClick={quitBoard}>Quit board</Button>
     </div>
   );
 }

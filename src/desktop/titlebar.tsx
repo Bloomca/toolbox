@@ -1,5 +1,6 @@
 import { createRef, type State } from "veles";
 
+import { Button } from "../design/button";
 import { moveWindow, type Window, setActiveWindow, closeWindow } from "../state/window";
 
 export function Titlebar({ window$ }: { window$: State<Window> }) {
@@ -34,9 +35,9 @@ export function Titlebar({ window$ }: { window$: State<Window> }) {
     <div ref={ref} class="titlebar" onMouseDown={onMouseDown}>
       {window$.renderSelected((value) => value.appId)}
 
-      <button class="icon-button" onClick={() => closeWindow(window$.get().id)}>
+      <Button variant="icon" onClick={() => closeWindow(window$.get().id)}>
         X
-      </button>
+      </Button>
     </div>
   );
 }

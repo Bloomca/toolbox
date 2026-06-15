@@ -52,7 +52,7 @@ export function openApp({ appId }: { appId: AppId }) {
       },
       size: {
         width: 600,
-        height: 670,
+        height: 675,
       },
       appId,
       zIndex: zIndex++,

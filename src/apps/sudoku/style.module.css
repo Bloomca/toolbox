@@ -3,8 +3,8 @@
   grid-template-columns: repeat(9, 1fr);
   grid-template-rows: repeat(9, 1fr);
   aspect-ratio: 1;
-  margin: 8px;
-  width: calc(100% - 16px);
+  margin: 12px;
+  width: calc(100% - 24px);
   box-sizing: border-box;
   border: 2px solid black;
 }
@@ -59,20 +59,16 @@
 }
 
 .controls {
-  margin-left: 8px;
+  margin-left: 12px;
   margin-top: 8px;
   display: flex;
-  gap: 8px;
-}
-
-.withErrors {
-  background: #ccc;
+  gap: 12px;
 }
 
 .menu {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
   width: 200px;
   margin-left: auto;
   margin-right: auto;
