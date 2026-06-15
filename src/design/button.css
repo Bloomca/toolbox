@@ -1,0 +1,24 @@
+[data-toolbox-button] {
+  user-select: none;
+  box-shadow:
+    2px 2px #c5af9b,
+    5px 5px rgb(87 72 72);
+  border: 1px solid black;
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+  font-weight: 700;
+}
+
+[data-toolbox-button][aria-pressed="true"] {
+  background: #ccc;
+}
+
+[data-toolbox-button-variant="icon"] {
+  min-width: 32px;
+  height: 32px;
+  padding: 0 10px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  box-shadow: none;
+}
