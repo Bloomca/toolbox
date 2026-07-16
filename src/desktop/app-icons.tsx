@@ -1,12 +1,12 @@
-import { openApp, type AppId } from "../state/window";
+import { APP_IDS, getAppDefinition, type AppId } from "../apps/manifest";
+import { openApp } from "../state/window";
 
 export function AppIcons() {
   return (
     <div class="app-icons-container">
-      <AppIcon name="Settings" appId="settings" />
-      <AppIcon name="Sudoku" appId="sudoku" />
-      <AppIcon name="Markdown" appId="markdown-reader" />
-      <AppIcon name="Spinny" appId="spinny" />
+      {APP_IDS.map((appId) => (
+        <AppIcon name={getAppDefinition(appId).name} appId={appId} />
+      ))}
     </div>
   );
 }
