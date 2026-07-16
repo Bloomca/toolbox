@@ -1,9 +1,10 @@
 /** @vitest-environment happy-dom */
 
-import { afterEach, describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { attachComponent } from "veles";
 
 import { SpinnyApp } from ".";
+import { readSpinnyLists, saveSpinnyList } from "./storage";
 
 let unmount: (() => void) | undefined;
 
@@ -18,6 +19,7 @@ afterEach(() => {
   unmount?.();
   unmount = undefined;
   document.body.replaceChildren();
+  localStorage.clear();
 });
 
 describe("Spinny choice editor", () => {
@@ -50,6 +52,43 @@ describe("Spinny choice editor", () => {
     expect(container.querySelector("aside")?.getAttribute("aria-label")).toBe(
       "Weekend choices editor",
     );
+  });
+
+  test("saves the current list", async () => {
+    const container = renderApp();
+    const saveButton = findButton(container, "Save");
+
+    await vi.waitFor(() => expect(saveButton.disabled).toBe(false));
+    saveButton.click();
+
+    await vi.waitFor(async () => expect(await readSpinnyLists()).toHaveLength(1));
+    const lists = await readSpinnyLists();
+    expect(saveButton.disabled).toBe(true);
+    expect(lists[0].title).toBe("New List");
+    expect(lists[0].choices).toHaveLength(9);
+  });
+
+  test("disables saving when a normalized title already exists", async () => {
+    await saveSpinnyList({ title: "  NEW LIST  ", choices: [] });
+    const container = renderApp();
+    const saveButton = findButton(container, "Save");
+
+    const titleInput = container.querySelector<HTMLInputElement>('[aria-label="List title"]');
+    setInputValue(titleInput, "Another list");
+    await vi.waitFor(() => expect(saveButton.disabled).toBe(false));
+
+    setInputValue(titleInput, " new list ");
+    expect(saveButton.disabled).toBe(true);
+  });
+
+  test("disables saving a blank title", async () => {
+    const container = renderApp();
+    const saveButton = findButton(container, "Save");
+    await vi.waitFor(() => expect(saveButton.disabled).toBe(false));
+
+    setInputValue(container.querySelector('[aria-label="List title"]'), "   ");
+
+    expect(saveButton.disabled).toBe(true);
   });
 
   test("updates the wheel label immediately", () => {
