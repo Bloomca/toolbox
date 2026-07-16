@@ -293,6 +293,74 @@ describe("Spinny choice editor", () => {
     expect(findTooltip("Delete").hidden).toBe(false);
   });
 
+  test("expands and collapses weight options for a choice", () => {
+    const container = renderApp();
+    const optionsButton = container.querySelector<HTMLButtonElement>(
+      '[aria-label="Options for Sun"]',
+    );
+
+    expect(optionsButton?.textContent).toContain("…");
+    expect(optionsButton?.getAttribute("aria-expanded")).toBe("false");
+    expect(container.querySelector('[aria-label="Weight for Sun"]')).toBeNull();
+    optionsButton?.click();
+
+    const slider = container.querySelector<HTMLInputElement>('[aria-label="Weight for Sun"]');
+    expect(optionsButton?.getAttribute("aria-expanded")).toBe("true");
+    expect(slider?.type).toBe("range");
+    expect(slider?.min).toBe("1");
+    expect(slider?.max).toBe("9");
+    expect(slider?.value).toBe("5");
+    expect(slider?.parentElement?.id).toBe(optionsButton?.getAttribute("aria-controls"));
+
+    optionsButton?.click();
+    expect(optionsButton?.getAttribute("aria-expanded")).toBe("false");
+    expect(container.querySelector('[aria-label="Weight for Sun"]')).toBeNull();
+  });
+
+  test("maps slider positions to choice weights", async () => {
+    const container = renderApp();
+    container.querySelector<HTMLButtonElement>('[aria-label="Options for Sun"]')?.click();
+    const slider = container.querySelector<HTMLInputElement>('[aria-label="Weight for Sun"]');
+    if (!slider) throw new Error("Expected a weight slider.");
+
+    setInputValue(slider, "1");
+    expect(slider.getAttribute("aria-valuetext")).toBe("0.5×");
+    const saveButton = findButton(container, "Save");
+    await vi.waitFor(() => expect(saveButton.disabled).toBe(false));
+    saveButton.click();
+    await vi.waitFor(async () => expect((await readSpinnyLists())[0]?.choices[0].weight).toBe(0.5));
+    await vi.waitFor(() => expect(findButton(container, "Save as new").disabled).toBe(false));
+
+    setInputValue(slider, "9");
+    expect(slider.getAttribute("aria-valuetext")).toBe("1.5×");
+    findButton(container, "Update").click();
+    await vi.waitFor(async () => expect((await readSpinnyLists())[0]?.choices[0].weight).toBe(1.5));
+  });
+
+  test("expands options when a saved choice has a custom weight", async () => {
+    const weightedList = await saveSpinnyList({
+      title: "Weighted",
+      choices: [{ id: "sun", label: "Sun", weight: 1.5, included: true }],
+    });
+    const container = renderApp();
+    const select = await vi.waitFor(() => {
+      const dropdown = container.querySelector<HTMLSelectElement>('[aria-label="Saved lists"]');
+      expect(dropdown?.disabled).toBe(false);
+      return dropdown;
+    });
+
+    setSelectValue(select, weightedList.id);
+
+    const slider = container.querySelector<HTMLInputElement>('[aria-label="Weight for Sun"]');
+    expect(slider?.value).toBe("9");
+    expect(slider?.getAttribute("aria-valuetext")).toBe("1.5×");
+    expect(
+      container
+        .querySelector<HTMLButtonElement>('[aria-label="Options for Sun"]')
+        ?.getAttribute("aria-expanded"),
+    ).toBe("true");
+  });
+
   test("updates the wheel label immediately", () => {
     const container = renderApp();
     const input = container.querySelector<HTMLInputElement>('[aria-label="Choice name"]');
