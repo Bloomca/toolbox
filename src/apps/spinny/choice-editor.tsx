@@ -136,6 +136,7 @@ export function ChoiceEditor({
             choice$={choice$}
             disabled$={disabled$}
             focusOnMount={choiceIdToFocus === choice$.get().id}
+            onAddChoice={addChoice}
             onChange={updateChoice}
             onDelete={deleteChoice}
             onFocusHandled={() => {
@@ -160,6 +161,7 @@ function ChoiceRow({
   choice$,
   disabled$,
   focusOnMount,
+  onAddChoice,
   onChange,
   onDelete,
   onFocusHandled,
@@ -167,6 +169,7 @@ function ChoiceRow({
   choice$: State<EditableChoice>;
   disabled$: State<boolean>;
   focusOnMount: boolean;
+  onAddChoice: () => void;
   onChange: (id: string, update: Partial<Pick<EditableChoice, "included" | "label">>) => void;
   onDelete: (id: string) => void;
   onFocusHandled: () => void;
@@ -201,6 +204,18 @@ function ChoiceRow({
         disabled={disabled$.attribute()}
         value={choice$.attribute((choice) => choice.label)}
         onInput={(event) => onChange(choice$.get().id, { label: event.target.value })}
+        onKeyDown={(event) => {
+          if (
+            event.key !== "Enter" ||
+            event.repeat ||
+            event.isComposing ||
+            !isChoiceValid(choice$.get())
+          ) {
+            return;
+          }
+          event.preventDefault();
+          onAddChoice();
+        }}
       />
       <Tooltip content="Delete" placement="top">
         <Button
