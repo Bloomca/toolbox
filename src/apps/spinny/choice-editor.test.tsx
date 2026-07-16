@@ -136,20 +136,17 @@ describe("Spinny choice editor", () => {
     });
   });
 
-  test("disables saving when a normalized title already exists", async () => {
+  test("allows saving a duplicate title", async () => {
     await saveSpinnyList({ title: "  NEW LIST  ", choices: [] });
     const container = renderApp();
     const saveButton = findButton(container, "Save");
 
-    const duplicateTooltip = findTooltip(container, "A list with this title already exists.");
-    const titleInput = container.querySelector<HTMLInputElement>('[aria-label="List title"]');
-    setInputValue(titleInput, "Another list");
+    setInputValue(container.querySelector('[aria-label="List title"]'), " new list ");
     await vi.waitFor(() => expect(saveButton.disabled).toBe(false));
-    expect(duplicateTooltip.hidden).toBe(true);
+    saveButton.click();
 
-    setInputValue(titleInput, " new list ");
-    expect(saveButton.disabled).toBe(true);
-    expect(duplicateTooltip.hidden).toBe(false);
+    await vi.waitFor(async () => expect(await readSpinnyLists()).toHaveLength(2));
+    expect((await readSpinnyLists()).map((list) => list.title)).toEqual(["NEW LIST", "new list"]);
   });
 
   test("disables saving a blank title", async () => {

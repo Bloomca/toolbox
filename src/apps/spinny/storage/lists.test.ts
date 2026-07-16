@@ -4,12 +4,7 @@ import { afterEach, describe, expect, test } from "vitest";
 
 import { createAppStorage, localStorageBackend } from "../../../storage";
 import type { EditableChoice } from "../types";
-import {
-  DuplicateListTitleError,
-  readSpinnyLists,
-  saveSpinnyList,
-  updateSpinnyList,
-} from "./lists";
+import { readSpinnyLists, saveSpinnyList, updateSpinnyList } from "./lists";
 
 const storage = createAppStorage("spinny", localStorageBackend);
 
@@ -45,12 +40,11 @@ describe("Spinny list storage", () => {
     ]);
   });
 
-  test("rejects duplicate titles after trimming and case folding", async () => {
+  test("allows duplicate titles", async () => {
     await saveSpinnyList({ title: "Weather", choices });
+    await saveSpinnyList({ title: "  WEATHER ", choices });
 
-    await expect(saveSpinnyList({ title: "  WEATHER ", choices })).rejects.toBeInstanceOf(
-      DuplicateListTitleError,
-    );
+    expect((await readSpinnyLists()).map((list) => list.title)).toEqual(["Weather", "WEATHER"]);
   });
 
   test("updates a saved list in place", async () => {
