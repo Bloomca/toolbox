@@ -27,6 +27,7 @@ describe("Spinny", () => {
     const container = mount(<SpinnyApp />);
     const wheel = container.querySelector<HTMLElement>('[role="list"]');
     const labels = Array.from(container.querySelectorAll<HTMLElement>('[role="listitem"]'));
+    const segments = Array.from(container.querySelectorAll<HTMLElement>("[data-wheel-segment]"));
 
     expect(labels.map((label) => label.title)).toEqual([
       "Sun",
@@ -39,7 +40,9 @@ describe("Spinny", () => {
       "Ocean",
       "Sand",
     ]);
+    expect(segments).toHaveLength(labels.length);
     expect(wheel?.style.background).toContain("conic-gradient");
+    expect(segments[0].style.background).toContain("radial-gradient");
     expect(labels[0].style.color).toBe(WHEEL_PALETTE[0].foreground);
   });
 
@@ -47,11 +50,27 @@ describe("Spinny", () => {
     vi.spyOn(window, "matchMedia").mockReturnValue({ matches: true } as MediaQueryList);
     const container = mount(<SpinnyApp />);
 
+    expect(container.querySelector("[data-wheel-segment][data-selected]")).toBeNull();
+    expect(container.querySelector("[data-choice-id][data-dimmed]")).toBeNull();
     container.querySelector<HTMLButtonElement>("button")?.click();
 
     await vi.waitFor(() => {
       expect(container.querySelector('[role="status"]')?.textContent).toMatch(/^Winner: /);
     });
+    const winner = container.querySelector('[role="status"]')?.textContent?.replace("Winner: ", "");
+    const winnerLabel = Array.from(
+      container.querySelectorAll<HTMLElement>("[data-choice-id]"),
+    ).find((label) => label.title === winner);
+    const selectedSegment = container.querySelector<HTMLElement>(
+      "[data-wheel-segment][data-selected]",
+    );
+
+    const dimmedLabels = container.querySelectorAll("[data-choice-id][data-dimmed]");
+
+    expect(selectedSegment?.dataset.wheelSegment).toBe(winnerLabel?.dataset.choiceId);
+    expect(winnerLabel?.hasAttribute("data-dimmed")).toBe(false);
+    expect(dimmedLabels).toHaveLength(8);
+    expect(container.querySelector<HTMLElement>('[role="list"]')?.style.background).toContain("d9");
     expect(
       container.querySelector<HTMLElement>("[class*='wheelSpinner']")?.style.transform,
     ).toMatch(/^rotate\(.+deg\)$/);
