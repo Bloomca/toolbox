@@ -39,6 +39,30 @@ describe("calculateResizedBounds", () => {
       deltaY: 100,
       expected: { position: { x: 150, y: 200 }, size: { width: 600, height: 400 } },
     },
+    {
+      edge: "top-right" as ResizeEdge,
+      deltaX: 100,
+      deltaY: 100,
+      expected: { position: { x: 150, y: 200 }, size: { width: 700, height: 400 } },
+    },
+    {
+      edge: "bottom-right" as ResizeEdge,
+      deltaX: 100,
+      deltaY: 100,
+      expected: { position: { x: 150, y: 100 }, size: { width: 700, height: 600 } },
+    },
+    {
+      edge: "bottom-left" as ResizeEdge,
+      deltaX: 100,
+      deltaY: 100,
+      expected: { position: { x: 250, y: 100 }, size: { width: 500, height: 600 } },
+    },
+    {
+      edge: "top-left" as ResizeEdge,
+      deltaX: 100,
+      deltaY: 100,
+      expected: { position: { x: 250, y: 200 }, size: { width: 500, height: 400 } },
+    },
   ])("resizes the $edge edge", ({ edge, deltaX, deltaY, expected }) => {
     expect(calculateResizedBounds(WINDOW, edge, deltaX, deltaY)).toEqual(expected);
   });
@@ -51,6 +75,13 @@ describe("calculateResizedBounds", () => {
     expect(calculateResizedBounds(WINDOW, "top", 0, 1_000)).toEqual({
       position: { x: 150, y: WINDOW.position.y + WINDOW.size.height - MIN_WINDOW_HEIGHT },
       size: { width: 600, height: MIN_WINDOW_HEIGHT },
+    });
+    expect(calculateResizedBounds(WINDOW, "top-left", 1_000, 1_000)).toEqual({
+      position: {
+        x: WINDOW.position.x + WINDOW.size.width - MIN_WINDOW_WIDTH,
+        y: WINDOW.position.y + WINDOW.size.height - MIN_WINDOW_HEIGHT,
+      },
+      size: { width: MIN_WINDOW_WIDTH, height: MIN_WINDOW_HEIGHT },
     });
   });
 });

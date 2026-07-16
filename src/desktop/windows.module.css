@@ -52,3 +52,36 @@
 .resizeHandle[data-resize-edge="left"] {
   left: 0;
 }
+
+.resizeHandle[data-resize-edge="top-left"],
+.resizeHandle[data-resize-edge="top-right"],
+.resizeHandle[data-resize-edge="bottom-right"],
+.resizeHandle[data-resize-edge="bottom-left"] {
+  z-index: 3;
+  width: 10px;
+  height: 10px;
+}
+
+.resizeHandle[data-resize-edge="top-left"] {
+  top: 0;
+  left: 0;
+  cursor: nwse-resize;
+}
+
+.resizeHandle[data-resize-edge="top-right"] {
+  top: 0;
+  right: 0;
+  cursor: nesw-resize;
+}
+
+.resizeHandle[data-resize-edge="bottom-right"] {
+  right: 0;
+  bottom: 0;
+  cursor: nwse-resize;
+}
+
+.resizeHandle[data-resize-edge="bottom-left"] {
+  bottom: 0;
+  left: 0;
+  cursor: nesw-resize;
+}

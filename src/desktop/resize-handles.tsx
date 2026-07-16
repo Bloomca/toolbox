@@ -10,9 +10,26 @@ import {
 
 import styles from "./windows.module.css";
 
-export type ResizeEdge = "top" | "right" | "bottom" | "left";
+export type ResizeEdge =
+  | "top"
+  | "top-right"
+  | "right"
+  | "bottom-right"
+  | "bottom"
+  | "bottom-left"
+  | "left"
+  | "top-left";
 
-const RESIZE_EDGES: readonly ResizeEdge[] = ["top", "right", "bottom", "left"];
+const RESIZE_EDGES: readonly ResizeEdge[] = [
+  "top",
+  "right",
+  "bottom",
+  "left",
+  "top-right",
+  "bottom-right",
+  "bottom-left",
+  "top-left",
+];
 
 export function ResizeHandles({ window$ }: { window$: State<Window> }) {
   return (
@@ -77,21 +94,20 @@ export function calculateResizedBounds(
   let width = window.size.width;
   let height = window.size.height;
 
-  switch (edge) {
-    case "right":
-      width = Math.max(MIN_WINDOW_WIDTH, window.size.width + deltaX);
-      break;
-    case "bottom":
-      height = Math.max(MIN_WINDOW_HEIGHT, window.size.height + deltaY);
-      break;
-    case "left":
-      width = Math.max(MIN_WINDOW_WIDTH, window.size.width - deltaX);
-      x = window.position.x + window.size.width - width;
-      break;
-    case "top":
-      height = Math.max(MIN_WINDOW_HEIGHT, window.size.height - deltaY);
-      y = window.position.y + window.size.height - height;
-      break;
+  const resizesRight = edge === "right" || edge === "top-right" || edge === "bottom-right";
+  const resizesLeft = edge === "left" || edge === "top-left" || edge === "bottom-left";
+  const resizesBottom = edge === "bottom" || edge === "bottom-left" || edge === "bottom-right";
+  const resizesTop = edge === "top" || edge === "top-left" || edge === "top-right";
+
+  if (resizesRight) width = Math.max(MIN_WINDOW_WIDTH, window.size.width + deltaX);
+  if (resizesLeft) {
+    width = Math.max(MIN_WINDOW_WIDTH, window.size.width - deltaX);
+    x = window.position.x + window.size.width - width;
+  }
+  if (resizesBottom) height = Math.max(MIN_WINDOW_HEIGHT, window.size.height + deltaY);
+  if (resizesTop) {
+    height = Math.max(MIN_WINDOW_HEIGHT, window.size.height - deltaY);
+    y = window.position.y + window.size.height - height;
   }
 
   return { position: { x, y }, size: { width, height } };
