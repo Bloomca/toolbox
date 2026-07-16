@@ -5,13 +5,6 @@ const LISTS_STORAGE_KEY = "lists";
 const storage = createAppStorage("spinny", localStorageBackend);
 let writeQueue = Promise.resolve();
 
-export class DuplicateListTitleError extends Error {
-  constructor(title: string) {
-    super(`A Spinny list named "${title}" already exists.`);
-    this.name = "DuplicateListTitleError";
-  }
-}
-
 export async function readSpinnyLists(): Promise<SavedSpinnyList[]> {
   const storedValue = await storage.read(LISTS_STORAGE_KEY);
   if (!Array.isArray(storedValue)) return [];
@@ -30,10 +23,6 @@ export function saveSpinnyList({
 
   const operation = writeQueue.then(async () => {
     const lists = await readSpinnyLists();
-    if (lists.some((list) => normalizeListTitle(list.title) === normalizedTitle)) {
-      throw new DuplicateListTitleError(title.trim());
-    }
-
     const list: SavedSpinnyList = {
       id: createListId(),
       title: title.trim(),

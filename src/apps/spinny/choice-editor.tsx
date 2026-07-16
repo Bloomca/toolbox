@@ -16,7 +16,6 @@ type ChoiceEditorProps = {
   selectedListId$: State<string | null>;
   listsLoaded$: State<boolean>;
   disabled$: State<boolean>;
-  hasDuplicateTitle$: State<boolean>;
   saveDisabled$: State<boolean>;
   onEdit: () => void;
   onSave: () => void;
@@ -31,7 +30,6 @@ export function ChoiceEditor({
   selectedListId$,
   listsLoaded$,
   disabled$,
-  hasDuplicateTitle$,
   saveDisabled$,
   onEdit,
   onSave,
@@ -110,15 +108,9 @@ export function ChoiceEditor({
               Update
             </Button>
           ) : (
-            <Tooltip
-              content="A list with this title already exists."
-              placement="right"
-              hidden={hasDuplicateTitle$.attribute((hasDuplicateTitle) => !hasDuplicateTitle)}
-            >
-              <Button disabled={saveDisabled$.attribute()} onClick={onSave}>
-                Save
-              </Button>
-            </Tooltip>
+            <Button disabled={saveDisabled$.attribute()} onClick={onSave}>
+              Save
+            </Button>
           ),
         )}
       </div>

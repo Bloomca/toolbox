@@ -2,7 +2,7 @@ import { createState, onMount, onUnmount } from "veles";
 
 import { ChoiceEditor } from "./choice-editor";
 import { SpinnerPanel } from "./spinner-panel";
-import { normalizeListTitle, readSpinnyLists, saveSpinnyList, updateSpinnyList } from "./storage";
+import { readSpinnyLists, saveSpinnyList, updateSpinnyList } from "./storage";
 import styles from "./style.module.css";
 import type { EditableChoice, SavedSpinnyList } from "./types";
 import type { WheelChoice } from "./wheel";
@@ -27,14 +27,11 @@ export function SpinnyApp() {
   const isSaving$ = createState(false);
   const choices$ = createState<EditableChoice[]>(INITIAL_CHOICES.map((choice) => ({ ...choice })));
   const isSpinning$ = createState(false);
-  const hasDuplicateTitle$ = listTitle$
-    .combine(savedLists$)
-    .map(([title, savedLists]) => hasListWithTitle(savedLists, title));
   const saveDisabled$ = listTitle$
-    .combine(hasDuplicateTitle$, isSpinning$, isSaving$, listsLoaded$)
+    .combine(isSpinning$, isSaving$, listsLoaded$)
     .map(
-      ([title, hasDuplicateTitle, isSpinning, isSaving, listsLoaded]) =>
-        !listsLoaded || hasDuplicateTitle || isSpinning || isSaving || !normalizeListTitle(title),
+      ([title, isSpinning, isSaving, listsLoaded]) =>
+        !listsLoaded || isSpinning || isSaving || !title.trim(),
     );
   const result$ = createState<WheelChoice | null>(null);
   let mounted = true;
@@ -60,16 +57,7 @@ export function SpinnyApp() {
 
   async function saveList() {
     const title = listTitle$.get().trim();
-    const savedLists = savedLists$.get();
-    if (
-      !listsLoaded$.get() ||
-      isSaving$.get() ||
-      isSpinning$.get() ||
-      !title ||
-      hasListWithTitle(savedLists, title)
-    ) {
-      return;
-    }
+    if (!listsLoaded$.get() || isSaving$.get() || isSpinning$.get() || !title) return;
 
     isSaving$.set(true);
     try {
@@ -133,7 +121,6 @@ export function SpinnyApp() {
         selectedListId$={selectedListId$}
         listsLoaded$={listsLoaded$}
         disabled$={isSpinning$}
-        hasDuplicateTitle$={hasDuplicateTitle$}
         saveDisabled$={saveDisabled$}
         onEdit={clearResult}
         onSave={saveList}
@@ -142,9 +129,4 @@ export function SpinnyApp() {
       />
     </div>
   );
-}
-
-function hasListWithTitle(lists: readonly SavedSpinnyList[], title: string): boolean {
-  const normalizedTitle = normalizeListTitle(title);
-  return lists.some((list) => normalizeListTitle(list.title) === normalizedTitle);
 }
