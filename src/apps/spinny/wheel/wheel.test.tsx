@@ -1,6 +1,6 @@
 /** @vitest-environment happy-dom */
 
-import { afterEach, describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { attachComponent } from "veles";
 
 import { SpinnyApp } from "..";
@@ -19,6 +19,7 @@ afterEach(() => {
   unmount?.();
   unmount = undefined;
   document.body.replaceChildren();
+  vi.restoreAllMocks();
 });
 
 describe("Spinny", () => {
@@ -40,6 +41,20 @@ describe("Spinny", () => {
     ]);
     expect(wheel?.style.background).toContain("conic-gradient");
     expect(labels[0].style.color).toBe(WHEEL_PALETTE[0].foreground);
+  });
+
+  test("spins the wheel and announces the selected choice", async () => {
+    vi.spyOn(window, "matchMedia").mockReturnValue({ matches: true } as MediaQueryList);
+    const container = mount(<SpinnyApp />);
+
+    container.querySelector<HTMLButtonElement>("button")?.click();
+
+    await vi.waitFor(() => {
+      expect(container.querySelector('[role="status"]')?.textContent).toMatch(/^Winner: /);
+    });
+    expect(
+      container.querySelector<HTMLElement>("[class*='wheelSpinner']")?.style.transform,
+    ).toMatch(/^rotate\(.+deg\)$/);
   });
 
   test.each([
