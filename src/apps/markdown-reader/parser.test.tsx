@@ -3,7 +3,7 @@
 import { afterEach, describe, expect, test } from "vitest";
 import { attachComponent } from "veles";
 
-import { Mardown } from "./parser";
+import { Markdown } from "./parser";
 
 let unmount: (() => void) | undefined;
 
@@ -12,7 +12,7 @@ function renderMarkdown(source: string): HTMLElement {
   document.body.append(container);
   unmount = attachComponent({
     htmlElement: container,
-    component: <Mardown source={source} />,
+    component: <Markdown source={source} />,
   });
   return container;
 }
