@@ -287,10 +287,10 @@ describe("Spinny choice editor", () => {
   });
 
   test("explains choice toggles and deletion with tooltips", () => {
-    const container = renderApp();
+    renderApp();
 
-    expect(findTooltip(container, "Toggle this option").hidden).toBe(false);
-    expect(findTooltip(container, "Delete").hidden).toBe(false);
+    expect(findTooltip("Toggle this option").hidden).toBe(false);
+    expect(findTooltip("Delete").hidden).toBe(false);
   });
 
   test("updates the wheel label immediately", () => {
@@ -393,8 +393,8 @@ describe("Spinny choice editor", () => {
   });
 });
 
-function findTooltip(container: HTMLElement, content: string): HTMLElement {
-  const tooltip = Array.from(container.querySelectorAll<HTMLElement>('[role="tooltip"]')).find(
+function findTooltip(content: string): HTMLElement {
+  const tooltip = Array.from(document.body.querySelectorAll<HTMLElement>('[role="tooltip"]')).find(
     (tooltip) => tooltip.textContent === content,
   );
   if (!tooltip) throw new Error(`Expected a tooltip containing "${content}".`);
