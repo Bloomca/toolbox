@@ -1,0 +1,60 @@
+.app {
+  position: relative;
+  height: calc(100% - 32px);
+  min-height: 240px;
+  overflow: auto;
+  box-sizing: border-box;
+}
+
+.emptyState {
+  height: 100%;
+  min-height: 240px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-sizing: border-box;
+  color: #5f4634;
+  text-align: center;
+}
+
+.emptyState strong {
+  font-size: 1.15rem;
+}
+
+.emptyState span {
+  color: rgb(95 70 52 / 0.72);
+  font-size: 0.9rem;
+}
+
+.document {
+  padding: 8px 24px 24px;
+}
+
+.document pre {
+  overflow: auto;
+  padding: 12px;
+  border-radius: 4px;
+  background: rgb(47 33 29 / 0.08);
+}
+
+.document code {
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+}
+
+.dropOverlay {
+  position: absolute;
+  inset: 8px;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  border: 2px dashed #5f4634;
+  border-radius: 6px;
+  color: #2f211d;
+  background: rgb(240 207 167 / 0.92);
+  font-size: 1.1rem;
+  font-weight: 700;
+  pointer-events: none;
+}

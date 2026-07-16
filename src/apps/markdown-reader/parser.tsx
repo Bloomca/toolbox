@@ -8,7 +8,7 @@ import type { RootContent, Parent, Heading } from "mdast";
 
 const markdownParser = unified().use(remarkParse).use(remarkGfm);
 
-export function Mardown({ source }: { source: string }) {
+export function Markdown({ source }: { source: string }) {
   const tree = markdownParser.parse(source);
 
   return (
