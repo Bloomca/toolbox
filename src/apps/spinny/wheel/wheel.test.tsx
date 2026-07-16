@@ -82,13 +82,25 @@ describe("Spinny", () => {
       name: "one choice",
       choices: [{ id: "only", label: "Only choice", weight: 1 }],
     },
-  ])("renders an invalid state with $name", ({ choices }) => {
+  ])("renders a wheel with $name", ({ choices }) => {
+    const container = mount(<Wheel choices={choices} />);
+
+    expect(container.querySelector('[role="alert"]')).toBeNull();
+    expect(container.querySelector('[role="list"]')).not.toBeNull();
+    expect(container.querySelectorAll("[data-wheel-segment]")).toHaveLength(choices.length);
+  });
+
+  test("renders an invalid state above the maximum choice count", () => {
+    const choices = Array.from({ length: 13 }, (_, index) => ({
+      id: String(index),
+      label: String(index),
+      weight: 1,
+    }));
     const container = mount(<Wheel choices={choices} />);
 
     expect(container.querySelector('[role="alert"]')?.textContent).toBe(
-      "Spinny needs between 2 and 12 choices.",
+      "Spinny supports up to 12 choices.",
     );
-    expect(container.querySelector('[role="list"]')).toBeNull();
   });
 
   test("uses choice weights to size the wheel segments", () => {

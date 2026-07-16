@@ -1,6 +1,7 @@
 import { createRef, createState, onUnmount } from "veles";
 
 import { Button } from "../../design/button";
+import { ChoiceEditor, isChoiceValid, type EditableChoice } from "./choice-editor";
 import {
   animatePointer,
   animateRotation,
@@ -12,26 +13,33 @@ import {
 import { Wheel, type WheelChoice } from "./wheel";
 import styles from "./style.module.css";
 
-const CHOICES: readonly WheelChoice[] = [
-  { id: "sun", label: "Sun", weight: 1 },
-  { id: "water", label: "Water", weight: 1 },
-  { id: "earth", label: "Earth", weight: 1 },
-  { id: "wind", label: "Wind", weight: 1 },
-  { id: "fire", label: "Fire", weight: 1 },
-  { id: "sky", label: "Sky", weight: 1 },
-  { id: "air", label: "Air", weight: 1 },
-  { id: "ocean", label: "Ocean", weight: 1 },
-  { id: "sand", label: "Sand", weight: 1 },
+const MINIMUM_SPIN_CHOICES = 2;
+
+const INITIAL_CHOICES: readonly EditableChoice[] = [
+  { id: "sun", label: "Sun", weight: 1, included: true },
+  { id: "water", label: "Water", weight: 1, included: true },
+  { id: "earth", label: "Earth", weight: 1, included: true },
+  { id: "wind", label: "Wind", weight: 1, included: true },
+  { id: "fire", label: "Fire", weight: 1, included: true },
+  { id: "sky", label: "Sky", weight: 1, included: true },
+  { id: "air", label: "Air", weight: 1, included: true },
+  { id: "ocean", label: "Ocean", weight: 1, included: true },
+  { id: "sand", label: "Sand", weight: 1, included: true },
 ];
 
 export function SpinnyApp() {
   const wheelRef = createRef<HTMLDivElement>();
   const pointerRef = createRef<HTMLDivElement>();
+  const choices$ = createState<EditableChoice[]>(INITIAL_CHOICES.map((choice) => ({ ...choice })));
+  const activeChoices$ = choices$.map(getActiveChoices);
+  const canSpin$ = activeChoices$.map((choices) => choices.length >= MINIMUM_SPIN_CHOICES);
   const isSpinning$ = createState(false);
+  const spinDisabled$ = isSpinning$.combine(canSpin$);
   const result$ = createState<WheelChoice | null>(null);
   const selectedChoiceId$ = result$.map((result) => result?.id ?? null);
+  const resultMessage$ = result$.combine(canSpin$);
   const pointerPosition = getPointerPosition();
-  let currentRotation = createInitialRotation(CHOICES);
+  let currentRotation = createInitialRotation(activeChoices$.get());
   let rotationAnimation: RotationAnimation | undefined;
   let pointerAnimation: Animation | undefined;
   let mounted = true;
@@ -43,10 +51,13 @@ export function SpinnyApp() {
   });
 
   async function spin() {
-    if (isSpinning$.get() || !wheelRef.current) return;
+    const activeChoices = activeChoices$.get();
+    if (isSpinning$.get() || activeChoices.length < MINIMUM_SPIN_CHOICES || !wheelRef.current) {
+      return;
+    }
 
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const plan = createSpinPlan(CHOICES, currentRotation, { reducedMotion });
+    const plan = createSpinPlan(activeChoices, currentRotation, { reducedMotion });
     isSpinning$.set(true);
     result$.set(null);
     pointerAnimation?.cancel();
@@ -64,41 +75,66 @@ export function SpinnyApp() {
     isSpinning$.set(false);
   }
 
+  function clearResult() {
+    result$.set(null);
+  }
+
   return (
     <div class={styles.app}>
-      <div
-        class={styles.wheelStage}
-        aria-busy={isSpinning$.attribute((isSpinning) => (isSpinning ? "true" : "false"))}
-      >
+      <section class={styles.spinnerPanel} aria-label="Spinner">
         <div
-          ref={wheelRef}
-          class={styles.wheelSpinner}
-          style={{ transform: `rotate(${currentRotation}deg)` }}
+          class={styles.wheelStage}
+          aria-busy={isSpinning$.attribute((isSpinning) => (isSpinning ? "true" : "false"))}
         >
-          <Wheel choices={CHOICES} selectedChoiceId$={selectedChoiceId$} />
+          <div
+            ref={wheelRef}
+            class={styles.wheelSpinner}
+            style={{ transform: `rotate(${currentRotation}deg)` }}
+          >
+            {activeChoices$.render((choices) => (
+              <Wheel choices={choices} selectedChoiceId$={selectedChoiceId$} />
+            ))}
+          </div>
+          <div
+            class={styles.pointerPosition}
+            aria-hidden="true"
+            style={{
+              left: `${pointerPosition.left}%`,
+              top: `${pointerPosition.top}%`,
+              transform: `translate(-50%, -50%) rotate(${pointerPosition.rotation}deg)`,
+            }}
+          >
+            <div ref={pointerRef} class={styles.pointer} />
+          </div>
         </div>
-        <div
-          class={styles.pointerPosition}
-          aria-hidden="true"
-          style={{
-            left: `${pointerPosition.left}%`,
-            top: `${pointerPosition.top}%`,
-            transform: `translate(-50%, -50%) rotate(${pointerPosition.rotation}deg)`,
-          }}
-        >
-          <div ref={pointerRef} class={styles.pointer} />
+
+        <div class={styles.controls}>
+          <Button
+            disabled={spinDisabled$.attribute(([isSpinning, canSpin]) => isSpinning || !canSpin)}
+            onClick={spin}
+          >
+            {isSpinning$.render((isSpinning) => (isSpinning ? "Spinning…" : "Spin"))}
+          </Button>
         </div>
-      </div>
 
-      <div class={styles.controls}>
-        <Button disabled={isSpinning$.attribute()} onClick={spin}>
-          {isSpinning$.render((isSpinning) => (isSpinning ? "Spinning…" : "Spin"))}
-        </Button>
-      </div>
+        <div class={styles.result} role="status" aria-live="polite">
+          {resultMessage$.render(([result, canSpin]) =>
+            result
+              ? `Winner: ${result.label}`
+              : canSpin
+                ? null
+                : "Enable at least two named choices",
+          )}
+        </div>
+      </section>
 
-      <div class={styles.result} role="status" aria-live="polite">
-        {result$.render((result) => (result ? `Winner: ${result.label}` : null))}
-      </div>
+      <ChoiceEditor choices$={choices$} disabled$={isSpinning$} onEdit={clearResult} />
     </div>
   );
+}
+
+function getActiveChoices(choices: readonly EditableChoice[]): WheelChoice[] {
+  return choices
+    .filter((choice) => choice.included && isChoiceValid(choice))
+    .map(({ included: _included, ...choice }) => ({ ...choice, label: choice.label.trim() }));
 }

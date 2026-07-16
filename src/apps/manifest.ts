@@ -14,7 +14,7 @@ export const APP_MANIFEST = {
   "markdown-reader": { name: "Markdown" },
   spinny: {
     name: "Spinny",
-    preferredWindowSize: { width: 560, height: 640 },
+    preferredWindowSize: { width: 880, height: 660 },
   },
 } satisfies Record<string, AppDefinition>;
 

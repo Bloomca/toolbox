@@ -1,6 +1,5 @@
 import type { WheelChoice, WheelPaletteEntry, WheelSegment } from "./types";
 
-export const MIN_CHOICES = 2;
 export const MAX_CHOICES = 12;
 
 export const WHEEL_PALETTE: readonly WheelPaletteEntry[] = [
@@ -24,8 +23,8 @@ export function validateWheel(
   choices: readonly WheelChoice[],
   palette: readonly WheelPaletteEntry[],
 ): string | undefined {
-  if (choices.length < MIN_CHOICES || choices.length > MAX_CHOICES) {
-    return `Spinny needs between ${MIN_CHOICES} and ${MAX_CHOICES} choices.`;
+  if (choices.length > MAX_CHOICES) {
+    return `Spinny supports up to ${MAX_CHOICES} choices.`;
   }
 
   if (palette.length === 0) return "Spinny needs at least one wheel color.";
@@ -62,6 +61,8 @@ export function createWheelGradient(
   selectedChoiceId: string | null = null,
   nonWinnerOpacity = 1,
 ): string {
+  if (segments.length === 0) return "var(--window-background-colour)";
+
   const stops = segments.flatMap((segment) => {
     const angle = segment.endAngle - segment.startAngle;
     const borderWidth = Math.min(0.6, angle * 0.05);
