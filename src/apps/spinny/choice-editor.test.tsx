@@ -54,22 +54,38 @@ describe("Spinny choice editor", () => {
     );
   });
 
-  test("shows saved lists in a dropdown", async () => {
-    await saveSpinnyList({ title: "Weekend", choices: [] });
+  test("shows and selects saved lists from the dropdown", async () => {
+    const weekend = await saveSpinnyList({
+      title: "Weekend",
+      choices: [{ id: "rest", label: "Rest", weight: 1, included: true }],
+    });
     await saveSpinnyList({ title: "Lunch", choices: [] });
     const container = renderApp();
 
-    await vi.waitFor(() =>
-      expect(
-        container.querySelector<HTMLSelectElement>('[aria-label="Saved lists"]')?.disabled,
-      ).toBe(false),
-    );
-    const options = container.querySelectorAll('[aria-label="Saved lists"] option');
-    expect(Array.from(options, (option) => option.textContent)).toEqual([
+    const select = await vi.waitFor(() => {
+      const dropdown = container.querySelector<HTMLSelectElement>('[aria-label="Saved lists"]');
+      expect(dropdown?.disabled).toBe(false);
+      return dropdown;
+    });
+    const options = select?.querySelectorAll("option");
+    expect(Array.from(options ?? [], (option) => option.textContent)).toEqual([
       "Select a saved list",
       "Weekend",
       "Lunch",
     ]);
+
+    setSelectValue(select, weekend.id);
+
+    expect(container.querySelector<HTMLInputElement>('[aria-label="List title"]')?.value).toBe(
+      "Weekend",
+    );
+    expect(
+      Array.from(
+        container.querySelectorAll<HTMLInputElement>('[aria-label="Choice name"]'),
+        (input) => input.value,
+      ),
+    ).toEqual(["Rest"]);
+    expect(select?.value).toBe(weekend.id);
   });
 
   test("saves the current list", async () => {
@@ -86,6 +102,9 @@ describe("Spinny choice editor", () => {
     expect(lists[0].choices).toHaveLength(9);
     await vi.waitFor(() =>
       expect(container.querySelectorAll('[aria-label="Saved lists"] option')).toHaveLength(2),
+    );
+    expect(container.querySelector<HTMLSelectElement>('[aria-label="Saved lists"]')?.value).toBe(
+      lists[0].id,
     );
   });
 
@@ -233,4 +252,10 @@ function setInputValue(input: HTMLInputElement | null, value: string) {
 function setCheckboxValue(input: HTMLInputElement, checked: boolean) {
   input.checked = checked;
   input.dispatchEvent(new Event("change", { bubbles: true }));
+}
+
+function setSelectValue(select: HTMLSelectElement | null | undefined, value: string) {
+  if (!select) throw new Error("Expected a saved lists dropdown.");
+  select.value = value;
+  select.dispatchEvent(new Event("change", { bubbles: true }));
 }
