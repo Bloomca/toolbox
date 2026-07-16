@@ -328,6 +328,19 @@ describe("Spinny choice editor", () => {
     ).toBe("Cloud");
   });
 
+  test("adds and focuses a new choice when Enter is pressed in a named choice", () => {
+    const container = renderApp();
+    const firstInput = container.querySelector<HTMLInputElement>('[aria-label="Choice name"]');
+
+    firstInput?.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+
+    const inputs = container.querySelectorAll<HTMLInputElement>('[aria-label="Choice name"]');
+    const newInput = inputs[inputs.length - 1];
+    expect(inputs).toHaveLength(10);
+    expect(newInput.value).toBe("");
+    expect(document.activeElement).toBe(newInput);
+  });
+
   test("deletes a choice with an accessible icon button", () => {
     const container = renderApp();
     const deleteButton = container.querySelector<HTMLButtonElement>('[aria-label="Delete Sun"]');
