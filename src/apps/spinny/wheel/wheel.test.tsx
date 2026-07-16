@@ -4,6 +4,7 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 import { attachComponent } from "veles";
 
 import { SpinnyApp } from "..";
+import { readSpinHistory } from "../storage";
 import { Wheel, WHEEL_PALETTE, type WheelChoice } from ".";
 
 let unmount: (() => void) | undefined;
@@ -19,6 +20,7 @@ afterEach(() => {
   unmount?.();
   unmount = undefined;
   document.body.replaceChildren();
+  localStorage.clear();
   vi.restoreAllMocks();
 });
 
@@ -71,6 +73,12 @@ describe("Spinny", () => {
     expect(winnerLabel?.hasAttribute("data-dimmed")).toBe(false);
     expect(dimmedLabels).toHaveLength(8);
     expect(container.querySelector<HTMLElement>('[role="list"]')?.style.background).toContain("d9");
+    await vi.waitFor(async () => {
+      expect(await readSpinHistory()).toHaveLength(1);
+    });
+    const [historyEntry] = await readSpinHistory();
+    expect(historyEntry.winner.label).toBe(winner);
+    expect(historyEntry.timestamp).toBeGreaterThan(0);
     expect(
       container.querySelector<HTMLElement>("[class*='wheelSpinner']")?.style.transform,
     ).toMatch(/^rotate\(.+deg\)$/);

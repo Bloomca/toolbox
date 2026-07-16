@@ -2,6 +2,7 @@ import { createRef, createState, onUnmount } from "veles";
 
 import { Button } from "../../design/button";
 import { ChoiceEditor, isChoiceValid, type EditableChoice } from "./choice-editor";
+import { appendSpinHistory } from "./storage";
 import {
   animatePointer,
   animateRotation,
@@ -73,6 +74,10 @@ export function SpinnyApp() {
     }
     result$.set(plan.choice);
     isSpinning$.set(false);
+    void appendSpinHistory({
+      winner: { id: plan.choice.id, label: plan.choice.label },
+      timestamp: Date.now(),
+    }).catch((error) => console.error("Could not save Spinny history.", error));
   }
 
   function clearResult() {
