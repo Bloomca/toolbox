@@ -1,9 +1,16 @@
 import { createState } from "veles";
 
-export type AppId = "settings" | "sudoku" | "markdown-reader" | "spinny";
+import { getAppDefinition, type AppId, type WindowSize } from "../apps/manifest";
+
+export type { AppId, WindowSize } from "../apps/manifest";
 
 export const MIN_WINDOW_WIDTH = 320;
 export const MIN_WINDOW_HEIGHT = 240;
+
+export const DEFAULT_WINDOW_SIZE: Readonly<WindowSize> = {
+  width: 600,
+  height: 675,
+};
 
 // each window needs its own unique ID, because each app
 // can have multiple instances
@@ -23,10 +30,7 @@ export type Window = {
     x: number;
     y: number;
   };
-  size: {
-    width: number;
-    height: number;
-  };
+  size: WindowSize;
   appId: AppId;
   zIndex: number;
 };
@@ -43,6 +47,7 @@ export const windowState$ = createState<State>({
 
 export function openApp({ appId }: { appId: AppId }) {
   const newId = id++;
+  const size = getAppDefinition(appId).preferredWindowSize ?? DEFAULT_WINDOW_SIZE;
   windowState$.update((state) => ({
     ...state,
     windows: state.windows.concat({
@@ -53,10 +58,7 @@ export function openApp({ appId }: { appId: AppId }) {
         x: 150,
         y: 150,
       },
-      size: {
-        width: 600,
-        height: 675,
-      },
+      size: { ...size },
       appId,
       zIndex: zIndex++,
     }),
