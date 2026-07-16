@@ -26,11 +26,19 @@ describe("Tooltip", () => {
       ),
     });
 
+    const target = container.querySelector<HTMLElement>("[data-toolbox-tooltip]");
+    const tooltip = document.body.querySelector<HTMLElement>('[role="tooltip"]');
     expect(container.querySelector("button")?.textContent).toBe("Target");
-    expect(container.querySelector('[role="tooltip"]')?.textContent).toBe("Helpful text");
-    expect(
-      container.querySelector('[role="tooltip"]')?.getAttribute("data-toolbox-tooltip-placement"),
-    ).toBe("right");
+    expect(container.querySelector('[role="tooltip"]')).toBeNull();
+    expect(tooltip?.textContent).toBe("Helpful text");
+    expect(tooltip?.getAttribute("data-toolbox-tooltip-placement")).toBe("right");
+
+    target?.dispatchEvent(new MouseEvent("mouseenter"));
+    expect(tooltip?.hasAttribute("data-visible")).toBe(true);
+    expect(tooltip?.style.left).not.toBe("");
+    expect(tooltip?.style.top).not.toBe("");
+    target?.dispatchEvent(new MouseEvent("mouseleave"));
+    expect(tooltip?.hasAttribute("data-visible")).toBe(false);
   });
 
   test("can hide tooltip content without removing its target", () => {
@@ -45,7 +53,7 @@ describe("Tooltip", () => {
       ),
     });
 
-    expect(container.querySelector('[role="tooltip"]')?.hasAttribute("hidden")).toBe(true);
+    expect(document.body.querySelector('[role="tooltip"]')?.hasAttribute("hidden")).toBe(true);
     expect(container.querySelector("button")).not.toBeNull();
   });
 });
