@@ -97,11 +97,11 @@ export function SpinnyApp() {
       await deleteSpinnyList(id);
       const lists = await readSpinnyLists();
       if (mounted) {
-        savedLists$.set(lists);
         selectedListId$.set(null);
         listTitle$.set("New List");
         choices$.set(createDefaultChoices());
         clearResult();
+        savedLists$.set(lists);
       }
     } catch (error) {
       console.error("Could not delete Spinny list.", error);

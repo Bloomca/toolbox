@@ -23,6 +23,7 @@ describe("Dropdown", () => {
         <Dropdown
           aria-label="Example lists"
           placeholder="Choose a list"
+          placeholderSelected
           options={[
             { value: "first", label: "First list" },
             { value: "second", label: "Second list", disabled: true },
@@ -39,6 +40,7 @@ describe("Dropdown", () => {
       "First list",
       "Second list",
     ]);
+    expect(options?.[0].selected).toBe(true);
     expect(options?.[2].disabled).toBe(true);
   });
 });

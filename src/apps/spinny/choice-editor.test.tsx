@@ -56,6 +56,10 @@ describe("Spinny choice editor", () => {
     const titleInput = container.querySelector<HTMLInputElement>('[aria-label="List title"]');
 
     expect(titleInput?.value).toBe("New List");
+    expect(
+      container.querySelector<HTMLOptionElement>('[aria-label="Saved lists"] option[value=""]')
+        ?.textContent,
+    ).toBe("New list (unsaved)");
     setInputValue(titleInput, "Weekend choices");
     expect(container.querySelector("aside")?.getAttribute("aria-label")).toBe(
       "Weekend choices editor",
@@ -77,7 +81,7 @@ describe("Spinny choice editor", () => {
     });
     const options = select?.querySelectorAll("option");
     expect(Array.from(options ?? [], (option) => option.textContent)).toEqual([
-      "Select a saved list",
+      "New list (unsaved)",
       "Weekend",
       "Lunch",
     ]);
@@ -185,8 +189,13 @@ describe("Spinny choice editor", () => {
         (input) => input.value,
       ),
     ).toEqual(["Sun", "Water", "Earth", "Wind", "Fire", "Sky", "Air", "Ocean", "Sand"]);
-    expect(container.querySelector<HTMLSelectElement>('[aria-label="Saved lists"]')?.value).toBe(
-      "",
+    const savedListsDropdown = container.querySelector<HTMLSelectElement>(
+      '[aria-label="Saved lists"]',
+    );
+    expect(savedListsDropdown?.value).toBe("");
+    expect(savedListsDropdown?.selectedIndex).toBe(0);
+    expect(savedListsDropdown?.querySelector('option[value=""]')?.textContent).toBe(
+      "New list (unsaved)",
     );
   });
 
