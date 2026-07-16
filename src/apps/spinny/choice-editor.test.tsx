@@ -54,6 +54,24 @@ describe("Spinny choice editor", () => {
     );
   });
 
+  test("shows saved lists in a dropdown", async () => {
+    await saveSpinnyList({ title: "Weekend", choices: [] });
+    await saveSpinnyList({ title: "Lunch", choices: [] });
+    const container = renderApp();
+
+    await vi.waitFor(() =>
+      expect(
+        container.querySelector<HTMLSelectElement>('[aria-label="Saved lists"]')?.disabled,
+      ).toBe(false),
+    );
+    const options = container.querySelectorAll('[aria-label="Saved lists"] option');
+    expect(Array.from(options, (option) => option.textContent)).toEqual([
+      "Select a saved list",
+      "Weekend",
+      "Lunch",
+    ]);
+  });
+
   test("saves the current list", async () => {
     const container = renderApp();
     const saveButton = findButton(container, "Save");
@@ -66,6 +84,9 @@ describe("Spinny choice editor", () => {
     expect(saveButton.disabled).toBe(true);
     expect(lists[0].title).toBe("New List");
     expect(lists[0].choices).toHaveLength(9);
+    await vi.waitFor(() =>
+      expect(container.querySelectorAll('[aria-label="Saved lists"] option')).toHaveLength(2),
+    );
   });
 
   test("disables saving when a normalized title already exists", async () => {

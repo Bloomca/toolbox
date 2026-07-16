@@ -2,15 +2,18 @@ import type { State } from "veles";
 
 import { Button } from "../../design/button";
 import { Checkbox } from "../../design/checkbox";
+import { Dropdown } from "../../design/dropdown";
 import { TextInput } from "../../design/text-input";
 import { Tooltip } from "../../design/tooltip";
-import type { EditableChoice } from "./types";
+import type { EditableChoice, SavedSpinnyList } from "./types";
 import { MAX_CHOICES } from "./wheel";
 import styles from "./style.module.css";
 
 type ChoiceEditorProps = {
   title$: State<string>;
   choices$: State<EditableChoice[]>;
+  savedLists$: State<SavedSpinnyList[]>;
+  listsLoaded$: State<boolean>;
   disabled$: State<boolean>;
   hasDuplicateTitle$: State<boolean>;
   saveDisabled$: State<boolean>;
@@ -21,6 +24,8 @@ type ChoiceEditorProps = {
 export function ChoiceEditor({
   title$,
   choices$,
+  savedLists$,
+  listsLoaded$,
   disabled$,
   hasDuplicateTitle$,
   saveDisabled$,
@@ -28,6 +33,7 @@ export function ChoiceEditor({
   onSave,
 }: ChoiceEditorProps) {
   const canAdd$ = choices$.map((choices) => choices.length < MAX_CHOICES);
+  const savedListOptions$ = savedLists$.combine(listsLoaded$);
   const addDisabled$ = disabled$.combine(canAdd$);
   let nextChoiceId = 1;
 
@@ -62,8 +68,23 @@ export function ChoiceEditor({
       class={styles.choiceEditor}
       aria-label={title$.attribute((title) => `${title.trim() || "Untitled list"} editor`)}
     >
+      <label class={styles.savedListsField}>
+        {savedListOptions$.render(([savedLists, listsLoaded]) => (
+          <Dropdown
+            aria-label="Saved lists"
+            disabled={!listsLoaded || savedLists.length === 0}
+            placeholder={
+              listsLoaded
+                ? savedLists.length === 0
+                  ? "No saved lists"
+                  : "Select a saved list"
+                : "Loading lists…"
+            }
+            options={savedLists.map((list) => ({ value: list.id, label: list.title }))}
+          />
+        ))}
+      </label>
       <label class={styles.listTitleField}>
-        <span class={styles.listTitleLabel}>List title</span>
         <TextInput
           aria-label="List title"
           disabled={disabled$.attribute()}

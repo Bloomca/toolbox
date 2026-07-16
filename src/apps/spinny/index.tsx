@@ -191,6 +191,8 @@ export function SpinnyApp() {
       <ChoiceEditor
         title$={listTitle$}
         choices$={choices$}
+        savedLists$={savedLists$}
+        listsLoaded$={listsLoaded$}
         disabled$={isSpinning$}
         hasDuplicateTitle$={hasDuplicateTitle$}
         saveDisabled$={saveDisabled$}
