@@ -73,7 +73,50 @@ body {
   border: 1px solid #2f211d;
   border-radius: 6px;
   background-color: var(--window-background-colour);
+  overflow: hidden;
+}
+
+.window-content {
+  height: calc(100% - 32px);
   overflow: auto;
+}
+
+.window-resize-handle {
+  position: absolute;
+  z-index: 2;
+  user-select: none;
+}
+
+.window-resize-handle[data-resize-edge="top"],
+.window-resize-handle[data-resize-edge="bottom"] {
+  right: 6px;
+  left: 6px;
+  height: 6px;
+  cursor: ns-resize;
+}
+
+.window-resize-handle[data-resize-edge="top"] {
+  top: 0;
+}
+
+.window-resize-handle[data-resize-edge="bottom"] {
+  bottom: 0;
+}
+
+.window-resize-handle[data-resize-edge="right"],
+.window-resize-handle[data-resize-edge="left"] {
+  top: 6px;
+  bottom: 6px;
+  width: 6px;
+  cursor: ew-resize;
+}
+
+.window-resize-handle[data-resize-edge="right"] {
+  right: 0;
+}
+
+.window-resize-handle[data-resize-edge="left"] {
+  left: 0;
 }
 
 .window[data-active] {

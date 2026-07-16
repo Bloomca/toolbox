@@ -1,4 +1,5 @@
 import { windowState$, type Window, type AppId, setActiveWindow } from "../state/window";
+import { ResizeHandles } from "./resize-handles";
 import { Titlebar } from "./titlebar";
 
 import { MarkdownReaderApp } from "../apps/markdown-reader";
@@ -35,12 +36,15 @@ function Window({ window$ }: { window$: State<Window> }) {
       }}
     >
       <Titlebar window$={window$} />
-      {window$.renderSelected(
-        (value) => value.appId,
-        (appId) => (
-          <Application appId={appId} />
-        ),
-      )}
+      <div class="window-content">
+        {window$.renderSelected(
+          (value) => value.appId,
+          (appId) => (
+            <Application appId={appId} />
+          ),
+        )}
+      </div>
+      <ResizeHandles window$={window$} />
     </div>
   );
 }

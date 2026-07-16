@@ -2,6 +2,9 @@ import { createState } from "veles";
 
 export type AppId = "settings" | "sudoku" | "markdown-reader" | "spinny";
 
+export const MIN_WINDOW_WIDTH = 320;
+export const MIN_WINDOW_HEIGHT = 240;
+
 // each window needs its own unique ID, because each app
 // can have multiple instances
 let id = 1;
@@ -72,6 +75,13 @@ export function moveWindow(id: number, newX: number, newY: number) {
           }
         : window,
     ),
+  }));
+}
+
+export function resizeWindow(id: number, bounds: Pick<Window, "position" | "size">) {
+  windowState$.update((state) => ({
+    ...state,
+    windows: state.windows.map((window) => (window.id === id ? { ...window, ...bounds } : window)),
   }));
 }
 
