@@ -73,12 +73,15 @@ describe("Spinny choice editor", () => {
     const container = renderApp();
     const saveButton = findButton(container, "Save");
 
+    const duplicateTooltip = findTooltip(container, "A list with this title already exists.");
     const titleInput = container.querySelector<HTMLInputElement>('[aria-label="List title"]');
     setInputValue(titleInput, "Another list");
     await vi.waitFor(() => expect(saveButton.disabled).toBe(false));
+    expect(duplicateTooltip.hidden).toBe(true);
 
     setInputValue(titleInput, " new list ");
     expect(saveButton.disabled).toBe(true);
+    expect(duplicateTooltip.hidden).toBe(false);
   });
 
   test("disables saving a blank title", async () => {
@@ -89,6 +92,13 @@ describe("Spinny choice editor", () => {
     setInputValue(container.querySelector('[aria-label="List title"]'), "   ");
 
     expect(saveButton.disabled).toBe(true);
+  });
+
+  test("explains choice toggles and deletion with tooltips", () => {
+    const container = renderApp();
+
+    expect(findTooltip(container, "Toggle this option").hidden).toBe(false);
+    expect(findTooltip(container, "Delete").hidden).toBe(false);
   });
 
   test("updates the wheel label immediately", () => {
@@ -176,6 +186,14 @@ describe("Spinny choice editor", () => {
     expect(container.querySelectorAll("[data-wheel-segment]")).toHaveLength(0);
   });
 });
+
+function findTooltip(container: HTMLElement, content: string): HTMLElement {
+  const tooltip = Array.from(container.querySelectorAll<HTMLElement>('[role="tooltip"]')).find(
+    (tooltip) => tooltip.textContent === content,
+  );
+  if (!tooltip) throw new Error(`Expected a tooltip containing "${content}".`);
+  return tooltip;
+}
 
 function findButton(container: HTMLElement, label: string): HTMLButtonElement {
   const button = Array.from(container.querySelectorAll<HTMLButtonElement>("button")).find(

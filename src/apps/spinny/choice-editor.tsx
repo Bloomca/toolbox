@@ -3,6 +3,7 @@ import type { State } from "veles";
 import { Button } from "../../design/button";
 import { Checkbox } from "../../design/checkbox";
 import { TextInput } from "../../design/text-input";
+import { Tooltip } from "../../design/tooltip";
 import type { EditableChoice } from "./types";
 import { MAX_CHOICES } from "./wheel";
 import styles from "./style.module.css";
@@ -11,6 +12,7 @@ type ChoiceEditorProps = {
   title$: State<string>;
   choices$: State<EditableChoice[]>;
   disabled$: State<boolean>;
+  hasDuplicateTitle$: State<boolean>;
   saveDisabled$: State<boolean>;
   onEdit: () => void;
   onSave: () => void;
@@ -20,6 +22,7 @@ export function ChoiceEditor({
   title$,
   choices$,
   disabled$,
+  hasDuplicateTitle$,
   saveDisabled$,
   onEdit,
   onSave,
@@ -72,9 +75,15 @@ export function ChoiceEditor({
         />
       </label>
       <div class={styles.listSaveAction}>
-        <Button disabled={saveDisabled$.attribute()} onClick={onSave}>
-          Save
-        </Button>
+        <Tooltip
+          content="A list with this title already exists."
+          placement="right"
+          hidden={hasDuplicateTitle$.attribute((hasDuplicateTitle) => !hasDuplicateTitle)}
+        >
+          <Button disabled={saveDisabled$.attribute()} onClick={onSave}>
+            Save
+          </Button>
+        </Tooltip>
       </div>
       <h2 class={styles.choiceEditorTitle}>Choices</h2>
       <ul class={styles.choiceList}>
@@ -116,14 +125,16 @@ function ChoiceRow({
 
   return (
     <li class={styles.choiceRow} data-invalid={isValid$.attribute((isValid) => !isValid)}>
-      <Checkbox
-        aria-label={choice$.attribute((choice) => `Include ${choice.label || "blank choice"}`)}
-        checked={isChecked$.attribute()}
-        disabled={checkboxDisabled$.attribute(
-          ([editorDisabled, isValid]) => editorDisabled || !isValid,
-        )}
-        onChange={(event) => onChange(choice$.get().id, { included: event.target.checked })}
-      />
+      <Tooltip content="Toggle this option" placement="top">
+        <Checkbox
+          aria-label={choice$.attribute((choice) => `Include ${choice.label || "blank choice"}`)}
+          checked={isChecked$.attribute()}
+          disabled={checkboxDisabled$.attribute(
+            ([editorDisabled, isValid]) => editorDisabled || !isValid,
+          )}
+          onChange={(event) => onChange(choice$.get().id, { included: event.target.checked })}
+        />
+      </Tooltip>
       <TextInput
         aria-label="Choice name"
         aria-invalid={isValid$.attribute((isValid) => (isValid ? "false" : "true"))}
@@ -131,15 +142,17 @@ function ChoiceRow({
         value={choice$.attribute((choice) => choice.label)}
         onInput={(event) => onChange(choice$.get().id, { label: event.target.value })}
       />
-      <Button
-        variant="icon"
-        tone="danger"
-        aria-label={choice$.attribute((choice) => `Delete ${choice.label || "blank choice"}`)}
-        disabled={disabled$.attribute()}
-        onClick={() => onDelete(choice$.get().id)}
-      >
-        <span aria-hidden="true">−</span>
-      </Button>
+      <Tooltip content="Delete" placement="top">
+        <Button
+          variant="icon"
+          tone="danger"
+          aria-label={choice$.attribute((choice) => `Delete ${choice.label || "blank choice"}`)}
+          disabled={disabled$.attribute()}
+          onClick={() => onDelete(choice$.get().id)}
+        >
+          <span aria-hidden="true">−</span>
+        </Button>
+      </Tooltip>
     </li>
   );
 }

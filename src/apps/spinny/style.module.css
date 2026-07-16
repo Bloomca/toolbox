@@ -189,7 +189,6 @@
 
 .choiceEditor {
   min-width: 0;
-  overflow: auto;
   box-sizing: border-box;
   padding-left: 20px;
   border-left: 1px solid rgb(95 70 52 / 0.45);
