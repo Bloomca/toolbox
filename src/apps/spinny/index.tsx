@@ -1,8 +1,9 @@
 import { createState, onMount, onUnmount } from "veles";
 
+import { useConfirmation } from "../../design/confirmation";
 import { ChoiceEditor } from "./choice-editor";
 import { SpinnerPanel } from "./spinner-panel";
-import { readSpinnyLists, saveSpinnyList, updateSpinnyList } from "./storage";
+import { deleteSpinnyList, readSpinnyLists, saveSpinnyList, updateSpinnyList } from "./storage";
 import styles from "./style.module.css";
 import type { EditableChoice, SavedSpinnyList } from "./types";
 import type { WheelChoice } from "./wheel";
@@ -20,12 +21,13 @@ const INITIAL_CHOICES: readonly EditableChoice[] = [
 ];
 
 export function SpinnyApp() {
+  const confirm = useConfirmation();
   const listTitle$ = createState("New List");
   const savedLists$ = createState<SavedSpinnyList[]>([]);
   const selectedListId$ = createState<string | null>(null);
   const listsLoaded$ = createState(false);
   const isSaving$ = createState(false);
-  const choices$ = createState<EditableChoice[]>(INITIAL_CHOICES.map((choice) => ({ ...choice })));
+  const choices$ = createState<EditableChoice[]>(createDefaultChoices());
   const isSpinning$ = createState(false);
   const saveDisabled$ = listTitle$
     .combine(isSpinning$, isSaving$, listsLoaded$)
@@ -77,6 +79,37 @@ export function SpinnyApp() {
     }
   }
 
+  async function deleteList() {
+    const id = selectedListId$.get();
+    if (!id || isSaving$.get() || isSpinning$.get()) return;
+
+    const savedTitle = savedLists$.get().find((list) => list.id === id)?.title ?? listTitle$.get();
+    const confirmed = await confirm({
+      title: `Delete “${savedTitle}”?`,
+      message: "This saved list will be permanently deleted.",
+      confirmLabel: "Delete list",
+      tone: "danger",
+    });
+    if (!confirmed || !mounted || selectedListId$.get() !== id) return;
+
+    isSaving$.set(true);
+    try {
+      await deleteSpinnyList(id);
+      const lists = await readSpinnyLists();
+      if (mounted) {
+        savedLists$.set(lists);
+        selectedListId$.set(null);
+        listTitle$.set("New List");
+        choices$.set(createDefaultChoices());
+        clearResult();
+      }
+    } catch (error) {
+      console.error("Could not delete Spinny list.", error);
+    } finally {
+      if (mounted) isSaving$.set(false);
+    }
+  }
+
   async function updateList() {
     const id = selectedListId$.get();
     if (!id || isSaving$.get() || isSpinning$.get()) return;
@@ -122,6 +155,7 @@ export function SpinnyApp() {
         listsLoaded$={listsLoaded$}
         disabled$={isSpinning$}
         saveDisabled$={saveDisabled$}
+        onDeleteList={deleteList}
         onEdit={clearResult}
         onSave={saveList}
         onSelectList={selectList}
@@ -129,4 +163,8 @@ export function SpinnyApp() {
       />
     </div>
   );
+}
+
+function createDefaultChoices(): EditableChoice[] {
+  return INITIAL_CHOICES.map((choice) => ({ ...choice }));
 }

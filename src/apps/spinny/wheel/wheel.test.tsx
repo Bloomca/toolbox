@@ -3,6 +3,7 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { attachComponent } from "veles";
 
+import { ConfirmationProvider } from "../../../design/confirmation";
 import { SpinnyApp } from "..";
 import { readSpinHistory } from "../storage";
 import { Wheel, WHEEL_PALETTE, type WheelChoice } from ".";
@@ -26,7 +27,11 @@ afterEach(() => {
 
 describe("Spinny", () => {
   test("renders every hardcoded choice on the wheel", () => {
-    const container = mount(<SpinnyApp />);
+    const container = mount(
+      <ConfirmationProvider>
+        <SpinnyApp />
+      </ConfirmationProvider>,
+    );
     const wheel = container.querySelector<HTMLElement>('[role="list"]');
     const labels = Array.from(container.querySelectorAll<HTMLElement>('[role="listitem"]'));
     const segments = Array.from(container.querySelectorAll<HTMLElement>("[data-wheel-segment]"));
@@ -50,7 +55,11 @@ describe("Spinny", () => {
 
   test("spins the wheel and announces the selected choice", async () => {
     vi.spyOn(window, "matchMedia").mockReturnValue({ matches: true } as MediaQueryList);
-    const container = mount(<SpinnyApp />);
+    const container = mount(
+      <ConfirmationProvider>
+        <SpinnyApp />
+      </ConfirmationProvider>,
+    );
 
     expect(container.querySelector("[data-wheel-segment][data-selected]")).toBeNull();
     expect(container.querySelector("[data-choice-id][data-dimmed]")).toBeNull();

@@ -3,6 +3,7 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { attachComponent } from "veles";
 
+import { ConfirmationProvider } from "../../design/confirmation";
 import { SpinnyApp } from ".";
 import { readSpinnyLists, saveSpinnyList } from "./storage";
 
@@ -11,7 +12,14 @@ let unmount: (() => void) | undefined;
 function renderApp(): HTMLElement {
   const container = document.createElement("div");
   document.body.append(container);
-  unmount = attachComponent({ htmlElement: container, component: <SpinnyApp /> });
+  unmount = attachComponent({
+    htmlElement: container,
+    component: (
+      <ConfirmationProvider>
+        <SpinnyApp />
+      </ConfirmationProvider>
+    ),
+  });
   return container;
 }
 
@@ -139,6 +147,46 @@ describe("Spinny choice editor", () => {
     );
     expect(container.querySelector<HTMLSelectElement>('[aria-label="Saved lists"]')?.value).toBe(
       lists[1].id,
+    );
+  });
+
+  test("confirms deletion and resets to a new default list", async () => {
+    const weekend = await saveSpinnyList({
+      title: "Weekend",
+      choices: [{ id: "rest", label: "Rest", weight: 1, included: true }],
+    });
+    const container = renderApp();
+    const select = await vi.waitFor(() => {
+      const dropdown = container.querySelector<HTMLSelectElement>('[aria-label="Saved lists"]');
+      expect(dropdown?.disabled).toBe(false);
+      return dropdown;
+    });
+    setSelectValue(select, weekend.id);
+
+    findButton(container, "Delete").click();
+    expect(container.querySelector('[role="alertdialog"]')?.textContent).toContain(
+      "Delete “Weekend”?",
+    );
+    findButton(container, "Cancel").click();
+    await vi.waitFor(() => expect(container.querySelector('[role="alertdialog"]')).toBeNull());
+    await expect(readSpinnyLists()).resolves.toHaveLength(1);
+
+    findButton(container, "Delete").click();
+    findButton(container, "Delete list").click();
+
+    await vi.waitFor(async () => expect(await readSpinnyLists()).toHaveLength(0));
+    await vi.waitFor(() => expect(findButton(container, "Save").disabled).toBe(false));
+    expect(container.querySelector<HTMLInputElement>('[aria-label="List title"]')?.value).toBe(
+      "New List",
+    );
+    expect(
+      Array.from(
+        container.querySelectorAll<HTMLInputElement>('[aria-label="Choice name"]'),
+        (input) => input.value,
+      ),
+    ).toEqual(["Sun", "Water", "Earth", "Wind", "Fire", "Sky", "Air", "Ocean", "Sand"]);
+    expect(container.querySelector<HTMLSelectElement>('[aria-label="Saved lists"]')?.value).toBe(
+      "",
     );
   });
 
