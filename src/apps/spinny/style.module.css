@@ -4,7 +4,7 @@
   min-width: 720px;
   min-height: 560px;
   display: grid;
-  grid-template-columns: minmax(300px, 1fr) minmax(230px, 270px);
+  grid-template-columns: minmax(300px, 1fr) minmax(230px, 330px);
   align-items: stretch;
   gap: 24px;
   box-sizing: border-box;
@@ -212,8 +212,12 @@
 
 .choiceRow {
   display: grid;
-  grid-template-columns: 32px minmax(0, 1fr);
+  grid-template-columns: 32px minmax(0, 1fr) 32px;
   align-items: center;
   gap: 10px;
   min-width: 0;
+}
+
+.choiceActions {
+  padding: 6px 7px 8px 2px;
 }

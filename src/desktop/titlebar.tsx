@@ -51,7 +51,11 @@ export function Titlebar({ window$ }: { window$: State<Window> }) {
     >
       {window$.renderSelected((value) => value.appId)}
 
-      <Button variant="icon" onClick={() => closeWindow(window$.get().id)}>
+      <Button
+        variant="ghost"
+        aria-label="Close window"
+        onClick={() => closeWindow(window$.get().id)}
+      >
         X
       </Button>
     </div>

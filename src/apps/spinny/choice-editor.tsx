@@ -1,8 +1,9 @@
 import type { State } from "veles";
 
+import { Button } from "../../design/button";
 import { Checkbox } from "../../design/checkbox";
 import { TextInput } from "../../design/text-input";
-import type { WheelChoice } from "./wheel";
+import { MAX_CHOICES, type WheelChoice } from "./wheel";
 import styles from "./style.module.css";
 
 export type EditableChoice = WheelChoice & {
@@ -16,10 +17,33 @@ type ChoiceEditorProps = {
 };
 
 export function ChoiceEditor({ choices$, disabled$, onEdit }: ChoiceEditorProps) {
+  const canAdd$ = choices$.map((choices) => choices.length < MAX_CHOICES);
+  const addDisabled$ = disabled$.combine(canAdd$);
+  let nextChoiceId = 1;
+
   function updateChoice(id: string, update: Partial<Pick<EditableChoice, "included" | "label">>) {
     choices$.update((choices) =>
       choices.map((choice) => (choice.id === id ? { ...choice, ...update } : choice)),
     );
+    onEdit();
+  }
+
+  function addChoice() {
+    if (disabled$.get() || choices$.get().length >= MAX_CHOICES) return;
+
+    const choices = choices$.get();
+    let id: string;
+    do {
+      id = `custom-${nextChoiceId++}`;
+    } while (choices.some((choice) => choice.id === id));
+
+    choices$.set(choices.concat({ id, label: "", weight: 1, included: true }));
+    onEdit();
+  }
+
+  function deleteChoice(id: string) {
+    if (disabled$.get()) return;
+    choices$.update((choices) => choices.filter((choice) => choice.id !== id));
     onEdit();
   }
 
@@ -28,9 +52,22 @@ export function ChoiceEditor({ choices$, disabled$, onEdit }: ChoiceEditorProps)
       <h2 class={styles.choiceEditorTitle}>Choices</h2>
       <ul class={styles.choiceList}>
         {choices$.renderEach({ key: "id" }, ({ elementState: choice$ }) => (
-          <ChoiceRow choice$={choice$} disabled$={disabled$} onChange={updateChoice} />
+          <ChoiceRow
+            choice$={choice$}
+            disabled$={disabled$}
+            onChange={updateChoice}
+            onDelete={deleteChoice}
+          />
         ))}
       </ul>
+      <div class={styles.choiceActions}>
+        <Button
+          disabled={addDisabled$.attribute(([editorDisabled, canAdd]) => editorDisabled || !canAdd)}
+          onClick={addChoice}
+        >
+          Add
+        </Button>
+      </div>
     </aside>
   );
 }
@@ -39,10 +76,12 @@ function ChoiceRow({
   choice$,
   disabled$,
   onChange,
+  onDelete,
 }: {
   choice$: State<EditableChoice>;
   disabled$: State<boolean>;
   onChange: (id: string, update: Partial<Pick<EditableChoice, "included" | "label">>) => void;
+  onDelete: (id: string) => void;
 }) {
   const isValid$ = choice$.map(isChoiceValid);
   const isChecked$ = choice$.map((choice) => choice.included && isChoiceValid(choice));
@@ -65,6 +104,15 @@ function ChoiceRow({
         value={choice$.attribute((choice) => choice.label)}
         onInput={(event) => onChange(choice$.get().id, { label: event.target.value })}
       />
+      <Button
+        variant="icon"
+        tone="danger"
+        aria-label={choice$.attribute((choice) => `Delete ${choice.label || "blank choice"}`)}
+        disabled={disabled$.attribute()}
+        onClick={() => onDelete(choice$.get().id)}
+      >
+        <span aria-hidden="true">−</span>
+      </Button>
     </li>
   );
 }
