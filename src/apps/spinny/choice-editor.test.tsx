@@ -86,6 +86,7 @@ describe("Spinny choice editor", () => {
       ),
     ).toEqual(["Rest"]);
     expect(select?.value).toBe(weekend.id);
+    expect(findButton(container, "Update").disabled).toBe(false);
   });
 
   test("saves the current list", async () => {
@@ -97,7 +98,7 @@ describe("Spinny choice editor", () => {
 
     await vi.waitFor(async () => expect(await readSpinnyLists()).toHaveLength(1));
     const lists = await readSpinnyLists();
-    expect(saveButton.disabled).toBe(true);
+    expect(findButton(container, "Update").disabled).toBe(false);
     expect(lists[0].title).toBe("New List");
     expect(lists[0].choices).toHaveLength(9);
     await vi.waitFor(() =>
@@ -106,6 +107,33 @@ describe("Spinny choice editor", () => {
     expect(container.querySelector<HTMLSelectElement>('[aria-label="Saved lists"]')?.value).toBe(
       lists[0].id,
     );
+  });
+
+  test("updates the selected list without checking for a duplicate title", async () => {
+    await saveSpinnyList({ title: "Weather", choices: [] });
+    const forecast = await saveSpinnyList({
+      title: "Forecast",
+      choices: [{ id: "sun", label: "Sun", weight: 1, included: true }],
+    });
+    const container = renderApp();
+    const select = await vi.waitFor(() => {
+      const dropdown = container.querySelector<HTMLSelectElement>('[aria-label="Saved lists"]');
+      expect(dropdown?.disabled).toBe(false);
+      return dropdown;
+    });
+    setSelectValue(select, forecast.id);
+    setInputValue(container.querySelector('[aria-label="List title"]'), "Weather");
+    setInputValue(container.querySelector('[aria-label="Choice name"]'), "Rain");
+
+    const updateButton = findButton(container, "Update");
+    expect(updateButton.disabled).toBe(false);
+    updateButton.click();
+
+    await vi.waitFor(async () => {
+      const lists = await readSpinnyLists();
+      expect(lists[1].title).toBe("Weather");
+      expect(lists[1].choices[0].label).toBe("Rain");
+    });
   });
 
   test("disables saving when a normalized title already exists", async () => {

@@ -2,7 +2,7 @@ import { createState, onMount, onUnmount } from "veles";
 
 import { ChoiceEditor } from "./choice-editor";
 import { SpinnerPanel } from "./spinner-panel";
-import { normalizeListTitle, readSpinnyLists, saveSpinnyList } from "./storage";
+import { normalizeListTitle, readSpinnyLists, saveSpinnyList, updateSpinnyList } from "./storage";
 import styles from "./style.module.css";
 import type { EditableChoice, SavedSpinnyList } from "./types";
 import type { WheelChoice } from "./wheel";
@@ -89,6 +89,27 @@ export function SpinnyApp() {
     }
   }
 
+  async function updateList() {
+    const id = selectedListId$.get();
+    if (!id || isSaving$.get() || isSpinning$.get()) return;
+
+    isSaving$.set(true);
+    try {
+      await updateSpinnyList({ id, title: listTitle$.get(), choices: choices$.get() });
+    } catch (error) {
+      console.error("Could not update Spinny list.", error);
+    }
+
+    try {
+      const lists = await readSpinnyLists();
+      if (mounted) savedLists$.set(lists);
+    } catch (error) {
+      console.error("Could not reload Spinny lists.", error);
+    } finally {
+      if (mounted) isSaving$.set(false);
+    }
+  }
+
   function selectList(id: string) {
     if (isSpinning$.get()) return;
 
@@ -117,6 +138,7 @@ export function SpinnyApp() {
         onEdit={clearResult}
         onSave={saveList}
         onSelectList={selectList}
+        onUpdate={updateList}
       />
     </div>
   );
