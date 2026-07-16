@@ -21,6 +21,7 @@ type ChoiceEditorProps = {
   onEdit: () => void;
   onSave: () => void;
   onSelectList: (id: string) => void;
+  onUpdate: () => void;
 };
 
 export function ChoiceEditor({
@@ -35,6 +36,7 @@ export function ChoiceEditor({
   onEdit,
   onSave,
   onSelectList,
+  onUpdate,
 }: ChoiceEditorProps) {
   const canAdd$ = choices$.map((choices) => choices.length < MAX_CHOICES);
   const savedListOptions$ = savedLists$.combine(listsLoaded$, disabled$);
@@ -102,15 +104,23 @@ export function ChoiceEditor({
         />
       </label>
       <div class={styles.listSaveAction}>
-        <Tooltip
-          content="A list with this title already exists."
-          placement="right"
-          hidden={hasDuplicateTitle$.attribute((hasDuplicateTitle) => !hasDuplicateTitle)}
-        >
-          <Button disabled={saveDisabled$.attribute()} onClick={onSave}>
-            Save
-          </Button>
-        </Tooltip>
+        {selectedListId$.render((selectedListId) =>
+          selectedListId ? (
+            <Button disabled={disabled$.attribute()} onClick={onUpdate}>
+              Update
+            </Button>
+          ) : (
+            <Tooltip
+              content="A list with this title already exists."
+              placement="right"
+              hidden={hasDuplicateTitle$.attribute((hasDuplicateTitle) => !hasDuplicateTitle)}
+            >
+              <Button disabled={saveDisabled$.attribute()} onClick={onSave}>
+                Save
+              </Button>
+            </Tooltip>
+          ),
+        )}
       </div>
       <h2 class={styles.choiceEditorTitle}>Choices</h2>
       <ul class={styles.choiceList}>

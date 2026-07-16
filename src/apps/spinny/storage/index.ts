@@ -5,4 +5,5 @@ export {
   normalizeListTitle,
   readSpinnyLists,
   saveSpinnyList,
+  updateSpinnyList,
 } from "./lists";

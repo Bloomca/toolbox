@@ -51,6 +51,37 @@ export function saveSpinnyList({
   return operation;
 }
 
+export function updateSpinnyList({
+  id,
+  title,
+  choices,
+}: {
+  id: string;
+  title: string;
+  choices: readonly EditableChoice[];
+}): Promise<SavedSpinnyList> {
+  const operation = writeQueue.then(async () => {
+    const lists = await readSpinnyLists();
+    const index = lists.findIndex((list) => list.id === id);
+    if (index === -1) throw new Error(`Spinny list "${id}" was not found.`);
+
+    const list: SavedSpinnyList = {
+      id,
+      title: title.trim(),
+      choices: choices.map((choice) => ({ ...choice })),
+    };
+    lists[index] = list;
+    await storage.write(LISTS_STORAGE_KEY, lists);
+    return list;
+  });
+
+  writeQueue = operation.then(
+    () => undefined,
+    () => undefined,
+  );
+  return operation;
+}
+
 export function normalizeListTitle(title: string): string {
   return title.trim().toLowerCase();
 }

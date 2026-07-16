@@ -4,7 +4,12 @@ import { afterEach, describe, expect, test } from "vitest";
 
 import { createAppStorage, localStorageBackend } from "../../../storage";
 import type { EditableChoice } from "../types";
-import { DuplicateListTitleError, readSpinnyLists, saveSpinnyList } from "./lists";
+import {
+  DuplicateListTitleError,
+  readSpinnyLists,
+  saveSpinnyList,
+  updateSpinnyList,
+} from "./lists";
 
 const storage = createAppStorage("spinny", localStorageBackend);
 
@@ -46,6 +51,32 @@ describe("Spinny list storage", () => {
     await expect(saveSpinnyList({ title: "  WEATHER ", choices })).rejects.toBeInstanceOf(
       DuplicateListTitleError,
     );
+  });
+
+  test("updates a saved list in place", async () => {
+    const savedList = await saveSpinnyList({ title: "Weather", choices });
+    const updatedList = await updateSpinnyList({
+      id: savedList.id,
+      title: "  Forecast  ",
+      choices: [{ id: "cloud", label: "Cloud", weight: 2, included: true }],
+    });
+
+    expect(updatedList).toEqual({
+      id: savedList.id,
+      title: "Forecast",
+      choices: [{ id: "cloud", label: "Cloud", weight: 2, included: true }],
+    });
+    await expect(readSpinnyLists()).resolves.toEqual([updatedList]);
+  });
+
+  test("allows an update to use another list's title", async () => {
+    await saveSpinnyList({ title: "Weather", choices });
+    const secondList = await saveSpinnyList({ title: "Forecast", choices });
+
+    await expect(
+      updateSpinnyList({ id: secondList.id, title: " WEATHER ", choices }),
+    ).resolves.toMatchObject({ title: "WEATHER" });
+    expect((await readSpinnyLists()).map((list) => list.title)).toEqual(["Weather", "WEATHER"]);
   });
 
   test("serializes concurrent saves", async () => {
