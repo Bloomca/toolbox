@@ -1,4 +1,4 @@
-import type { State } from "veles";
+import { createRef, onMount, type State } from "veles";
 
 import { Button } from "../../design/button";
 import { Checkbox } from "../../design/checkbox";
@@ -47,6 +47,7 @@ export function ChoiceEditor({
     .map(([selectedListId, editorDisabled]) => !selectedListId || editorDisabled);
   const addDisabled$ = disabled$.combine(canAdd$);
   let nextChoiceId = 1;
+  let choiceIdToFocus: string | null = null;
 
   function updateChoice(id: string, update: Partial<Pick<EditableChoice, "included" | "label">>) {
     choices$.update((choices) =>
@@ -64,6 +65,7 @@ export function ChoiceEditor({
       id = `custom-${nextChoiceId++}`;
     } while (choices.some((choice) => choice.id === id));
 
+    choiceIdToFocus = id;
     choices$.set(choices.concat({ id, label: "", weight: 1, included: true }));
     onEdit();
   }
@@ -133,8 +135,12 @@ export function ChoiceEditor({
           <ChoiceRow
             choice$={choice$}
             disabled$={disabled$}
+            focusOnMount={choiceIdToFocus === choice$.get().id}
             onChange={updateChoice}
             onDelete={deleteChoice}
+            onFocusHandled={() => {
+              choiceIdToFocus = null;
+            }}
           />
         ))}
       </ul>
@@ -143,7 +149,7 @@ export function ChoiceEditor({
           disabled={addDisabled$.attribute(([editorDisabled, canAdd]) => editorDisabled || !canAdd)}
           onClick={addChoice}
         >
-          Add
+          Add option
         </Button>
       </div>
     </aside>
@@ -153,17 +159,28 @@ export function ChoiceEditor({
 function ChoiceRow({
   choice$,
   disabled$,
+  focusOnMount,
   onChange,
   onDelete,
+  onFocusHandled,
 }: {
   choice$: State<EditableChoice>;
   disabled$: State<boolean>;
+  focusOnMount: boolean;
   onChange: (id: string, update: Partial<Pick<EditableChoice, "included" | "label">>) => void;
   onDelete: (id: string) => void;
+  onFocusHandled: () => void;
 }) {
+  const inputRef = createRef<HTMLInputElement>();
   const isValid$ = choice$.map(isChoiceValid);
   const isChecked$ = choice$.map((choice) => choice.included && isChoiceValid(choice));
   const checkboxDisabled$ = disabled$.combine(isValid$);
+
+  onMount(() => {
+    if (!focusOnMount || !inputRef.current) return;
+    inputRef.current.focus();
+    onFocusHandled();
+  });
 
   return (
     <li class={styles.choiceRow} data-invalid={isValid$.attribute((isValid) => !isValid)}>
@@ -178,6 +195,7 @@ function ChoiceRow({
         />
       </Tooltip>
       <TextInput
+        ref={inputRef}
         aria-label="Choice name"
         aria-invalid={isValid$.attribute((isValid) => (isValid ? "false" : "true"))}
         disabled={disabled$.attribute()}
