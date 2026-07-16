@@ -1,3 +1,4 @@
+import { ConfirmationProvider } from "../design/confirmation";
 import { windowState$, type Window, type AppId, setActiveWindow } from "../state/window";
 import { ResizeHandles } from "./resize-handles";
 import { Titlebar } from "./titlebar";
@@ -39,15 +40,17 @@ function Window({ window$ }: { window$: State<Window> }) {
     >
       <ResizeHandles window$={window$} />
       <div class={styles.window}>
-        <Titlebar window$={window$} />
-        <div class={styles.content}>
-          {window$.renderSelected(
-            (value) => value.appId,
-            (appId) => (
-              <Application appId={appId} />
-            ),
-          )}
-        </div>
+        <ConfirmationProvider>
+          <Titlebar window$={window$} />
+          <div class={styles.content}>
+            {window$.renderSelected(
+              (value) => value.appId,
+              (appId) => (
+                <Application appId={appId} />
+              ),
+            )}
+          </div>
+        </ConfirmationProvider>
       </div>
     </div>
   );
