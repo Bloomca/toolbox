@@ -1,3 +1,4 @@
+import { createRef, onMount } from "veles";
 import type { JSX } from "veles/jsx-runtime";
 
 import "./dropdown.css";
@@ -11,14 +12,26 @@ export type DropdownOption = {
 type DropdownProps = Omit<JSX.HTMLAttributes<HTMLSelectElement>, "children"> & {
   options: readonly DropdownOption[];
   placeholder: string;
+  placeholderSelected?: boolean;
 };
 
-export function Dropdown({ options, placeholder, ...props }: DropdownProps) {
+export function Dropdown({
+  options,
+  placeholder,
+  placeholderSelected = false,
+  ...props
+}: DropdownProps) {
+  const selectRef = createRef<HTMLSelectElement>();
+
+  onMount(() => {
+    if (placeholderSelected && selectRef.current) selectRef.current.value = "";
+  });
+
   return (
     <span data-toolbox-dropdown="">
-      <select {...props} data-toolbox-dropdown-select="">
+      <select ref={selectRef} {...props} data-toolbox-dropdown-select="">
         {[
-          <option value="" disabled>
+          <option value="" disabled selected={placeholderSelected}>
             {placeholder}
           </option>,
           ...options.map((option) => (

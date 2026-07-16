@@ -57,6 +57,18 @@ export function SpinnyApp() {
     result$.set(null);
   }
 
+  function resetToNewList() {
+    selectedListId$.set(null);
+    listTitle$.set("New List");
+    choices$.set(createDefaultChoices());
+    clearResult();
+  }
+
+  function createNewList() {
+    if (!selectedListId$.get() || isSaving$.get() || isSpinning$.get()) return;
+    resetToNewList();
+  }
+
   async function saveList() {
     const title = listTitle$.get().trim();
     if (!listsLoaded$.get() || isSaving$.get() || isSpinning$.get() || !title) return;
@@ -97,11 +109,8 @@ export function SpinnyApp() {
       await deleteSpinnyList(id);
       const lists = await readSpinnyLists();
       if (mounted) {
+        resetToNewList();
         savedLists$.set(lists);
-        selectedListId$.set(null);
-        listTitle$.set("New List");
-        choices$.set(createDefaultChoices());
-        clearResult();
       }
     } catch (error) {
       console.error("Could not delete Spinny list.", error);
@@ -155,6 +164,7 @@ export function SpinnyApp() {
         listsLoaded$={listsLoaded$}
         disabled$={isSpinning$}
         saveDisabled$={saveDisabled$}
+        onCreateNewList={createNewList}
         onDeleteList={deleteList}
         onEdit={clearResult}
         onSave={saveList}

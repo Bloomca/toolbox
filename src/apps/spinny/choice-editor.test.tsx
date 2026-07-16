@@ -56,6 +56,11 @@ describe("Spinny choice editor", () => {
     const titleInput = container.querySelector<HTMLInputElement>('[aria-label="List title"]');
 
     expect(titleInput?.value).toBe("New List");
+    expect(
+      container.querySelector<HTMLOptionElement>('[aria-label="Saved lists"] option[value=""]')
+        ?.textContent,
+    ).toBe("New list (unsaved)");
+    expect(findButton(container, "New").disabled).toBe(true);
     setInputValue(titleInput, "Weekend choices");
     expect(container.querySelector("aside")?.getAttribute("aria-label")).toBe(
       "Weekend choices editor",
@@ -77,7 +82,7 @@ describe("Spinny choice editor", () => {
     });
     const options = select?.querySelectorAll("option");
     expect(Array.from(options ?? [], (option) => option.textContent)).toEqual([
-      "Select a saved list",
+      "New list (unsaved)",
       "Weekend",
       "Lunch",
     ]);
@@ -96,6 +101,42 @@ describe("Spinny choice editor", () => {
     expect(select?.value).toBe(weekend.id);
     expect(findButton(container, "Update").disabled).toBe(false);
     expect(findButton(container, "Save as new").disabled).toBe(false);
+    expect(findButton(container, "New").disabled).toBe(false);
+  });
+
+  test("resets a selected list to a new unsaved list", async () => {
+    const weekend = await saveSpinnyList({
+      title: "Weekend",
+      choices: [{ id: "rest", label: "Rest", weight: 1, included: true }],
+    });
+    const container = renderApp();
+    const select = await vi.waitFor(() => {
+      const dropdown = container.querySelector<HTMLSelectElement>('[aria-label="Saved lists"]');
+      expect(dropdown?.disabled).toBe(false);
+      return dropdown;
+    });
+    setSelectValue(select, weekend.id);
+    setInputValue(container.querySelector('[aria-label="List title"]'), "Changed");
+    setInputValue(container.querySelector('[aria-label="Choice name"]'), "Relax");
+
+    findButton(container, "New").click();
+
+    expect(container.querySelector<HTMLInputElement>('[aria-label="List title"]')?.value).toBe(
+      "New List",
+    );
+    expect(
+      Array.from(
+        container.querySelectorAll<HTMLInputElement>('[aria-label="Choice name"]'),
+        (input) => input.value,
+      ),
+    ).toEqual(["Sun", "Water", "Earth", "Wind", "Fire", "Sky", "Air", "Ocean", "Sand"]);
+    const currentDropdown = container.querySelector<HTMLSelectElement>(
+      '[aria-label="Saved lists"]',
+    );
+    expect(currentDropdown?.selectedIndex).toBe(0);
+    expect(findButton(container, "New").disabled).toBe(true);
+    expect(findButton(container, "Save").disabled).toBe(false);
+    expect((await readSpinnyLists())[0].choices[0].label).toBe("Rest");
   });
 
   test("saves the current list", async () => {
@@ -185,8 +226,13 @@ describe("Spinny choice editor", () => {
         (input) => input.value,
       ),
     ).toEqual(["Sun", "Water", "Earth", "Wind", "Fire", "Sky", "Air", "Ocean", "Sand"]);
-    expect(container.querySelector<HTMLSelectElement>('[aria-label="Saved lists"]')?.value).toBe(
-      "",
+    const savedListsDropdown = container.querySelector<HTMLSelectElement>(
+      '[aria-label="Saved lists"]',
+    );
+    expect(savedListsDropdown?.value).toBe("");
+    expect(savedListsDropdown?.selectedIndex).toBe(0);
+    expect(savedListsDropdown?.querySelector('option[value=""]')?.textContent).toBe(
+      "New list (unsaved)",
     );
   });
 
