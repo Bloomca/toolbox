@@ -4,7 +4,7 @@ import { afterEach, describe, expect, test } from "vitest";
 
 import { createAppStorage, localStorageBackend } from "../../../storage";
 import type { EditableChoice } from "../types";
-import { readSpinnyLists, saveSpinnyList, updateSpinnyList } from "./lists";
+import { deleteSpinnyList, readSpinnyLists, saveSpinnyList, updateSpinnyList } from "./lists";
 
 const storage = createAppStorage("spinny", localStorageBackend);
 
@@ -45,6 +45,15 @@ describe("Spinny list storage", () => {
     await saveSpinnyList({ title: "  WEATHER ", choices });
 
     expect((await readSpinnyLists()).map((list) => list.title)).toEqual(["Weather", "WEATHER"]);
+  });
+
+  test("deletes a saved list", async () => {
+    const firstList = await saveSpinnyList({ title: "Weather", choices });
+    const secondList = await saveSpinnyList({ title: "Forecast", choices });
+
+    await deleteSpinnyList(firstList.id);
+
+    await expect(readSpinnyLists()).resolves.toEqual([secondList]);
   });
 
   test("updates a saved list in place", async () => {

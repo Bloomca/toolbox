@@ -40,6 +40,22 @@ export function saveSpinnyList({
   return operation;
 }
 
+export function deleteSpinnyList(id: string): Promise<void> {
+  const operation = writeQueue.then(async () => {
+    const lists = await readSpinnyLists();
+    await storage.write(
+      LISTS_STORAGE_KEY,
+      lists.filter((list) => list.id !== id),
+    );
+  });
+
+  writeQueue = operation.then(
+    () => undefined,
+    () => undefined,
+  );
+  return operation;
+}
+
 export function updateSpinnyList({
   id,
   title,

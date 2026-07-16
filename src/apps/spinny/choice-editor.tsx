@@ -17,6 +17,7 @@ type ChoiceEditorProps = {
   listsLoaded$: State<boolean>;
   disabled$: State<boolean>;
   saveDisabled$: State<boolean>;
+  onDeleteList: () => void;
   onEdit: () => void;
   onSave: () => void;
   onSelectList: (id: string) => void;
@@ -31,6 +32,7 @@ export function ChoiceEditor({
   listsLoaded$,
   disabled$,
   saveDisabled$,
+  onDeleteList,
   onEdit,
   onSave,
   onSelectList,
@@ -110,6 +112,9 @@ export function ChoiceEditor({
               </Button>
               <Button disabled={saveDisabled$.attribute()} onClick={onSave}>
                 Save as new
+              </Button>
+              <Button tone="danger" disabled={disabled$.attribute()} onClick={onDeleteList}>
+                Delete
               </Button>
             </>
           ) : (

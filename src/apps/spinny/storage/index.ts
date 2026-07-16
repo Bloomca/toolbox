@@ -1,3 +1,9 @@
 export { appendSpinHistory, readSpinHistory } from "./history";
 export type { SpinHistoryEntry } from "./history";
-export { normalizeListTitle, readSpinnyLists, saveSpinnyList, updateSpinnyList } from "./lists";
+export {
+  deleteSpinnyList,
+  normalizeListTitle,
+  readSpinnyLists,
+  saveSpinnyList,
+  updateSpinnyList,
+} from "./lists";
