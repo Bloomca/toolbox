@@ -104,9 +104,14 @@ export function ChoiceEditor({
       <div class={styles.listSaveAction}>
         {selectedListId$.render((selectedListId) =>
           selectedListId ? (
-            <Button disabled={disabled$.attribute()} onClick={onUpdate}>
-              Update
-            </Button>
+            <>
+              <Button disabled={disabled$.attribute()} onClick={onUpdate}>
+                Update
+              </Button>
+              <Button disabled={saveDisabled$.attribute()} onClick={onSave}>
+                Save as new
+              </Button>
+            </>
           ) : (
             <Button disabled={saveDisabled$.attribute()} onClick={onSave}>
               Save

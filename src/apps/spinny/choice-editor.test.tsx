@@ -87,6 +87,7 @@ describe("Spinny choice editor", () => {
     ).toEqual(["Rest"]);
     expect(select?.value).toBe(weekend.id);
     expect(findButton(container, "Update").disabled).toBe(false);
+    expect(findButton(container, "Save as new").disabled).toBe(false);
   });
 
   test("saves the current list", async () => {
@@ -99,6 +100,7 @@ describe("Spinny choice editor", () => {
     await vi.waitFor(async () => expect(await readSpinnyLists()).toHaveLength(1));
     const lists = await readSpinnyLists();
     expect(findButton(container, "Update").disabled).toBe(false);
+    expect(findButton(container, "Save as new").disabled).toBe(false);
     expect(lists[0].title).toBe("New List");
     expect(lists[0].choices).toHaveLength(9);
     await vi.waitFor(() =>
@@ -106,6 +108,37 @@ describe("Spinny choice editor", () => {
     );
     expect(container.querySelector<HTMLSelectElement>('[aria-label="Saved lists"]')?.value).toBe(
       lists[0].id,
+    );
+  });
+
+  test("saves a selected list as a new list and selects it", async () => {
+    const weekend = await saveSpinnyList({
+      title: "Weekend",
+      choices: [{ id: "rest", label: "Rest", weight: 1, included: true }],
+    });
+    const container = renderApp();
+    const select = await vi.waitFor(() => {
+      const dropdown = container.querySelector<HTMLSelectElement>('[aria-label="Saved lists"]');
+      expect(dropdown?.disabled).toBe(false);
+      return dropdown;
+    });
+    setSelectValue(select, weekend.id);
+    setInputValue(container.querySelector('[aria-label="List title"]'), "Weekend copy");
+    setInputValue(container.querySelector('[aria-label="Choice name"]'), "Relax");
+
+    findButton(container, "Save as new").click();
+
+    await vi.waitFor(async () => expect(await readSpinnyLists()).toHaveLength(2));
+    const lists = await readSpinnyLists();
+    expect(lists.map((list) => ({ title: list.title, label: list.choices[0].label }))).toEqual([
+      { title: "Weekend", label: "Rest" },
+      { title: "Weekend copy", label: "Relax" },
+    ]);
+    await vi.waitFor(() =>
+      expect(container.querySelectorAll('[aria-label="Saved lists"] option')).toHaveLength(3),
+    );
+    expect(container.querySelector<HTMLSelectElement>('[aria-label="Saved lists"]')?.value).toBe(
+      lists[1].id,
     );
   });
 
