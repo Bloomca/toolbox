@@ -304,7 +304,7 @@ describe("Spinny choice editor", () => {
 
   test("adds a blank choice and includes it after it receives a name", () => {
     const container = renderApp();
-    const addButton = findButton(container, "Add");
+    const addButton = findButton(container, "Add option");
 
     addButton.click();
 
@@ -314,6 +314,7 @@ describe("Spinny choice editor", () => {
     const newCheckbox = checkboxes[checkboxes.length - 1];
     expect(inputs).toHaveLength(10);
     expect(newInput.value).toBe("");
+    expect(document.activeElement).toBe(newInput);
     expect(newCheckbox.disabled).toBe(true);
     expect(container.querySelectorAll("[data-wheel-segment]")).toHaveLength(9);
 
@@ -340,7 +341,7 @@ describe("Spinny choice editor", () => {
 
   test("disables adding at the maximum choice count", () => {
     const container = renderApp();
-    const addButton = findButton(container, "Add");
+    const addButton = findButton(container, "Add option");
 
     addButton.click();
     addButton.click();
