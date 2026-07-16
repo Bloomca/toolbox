@@ -29,6 +29,7 @@ export function SpinnyApp() {
   const pointerRef = createRef<HTMLDivElement>();
   const isSpinning$ = createState(false);
   const result$ = createState<WheelChoice | null>(null);
+  const selectedChoiceId$ = result$.map((result) => result?.id ?? null);
   const pointerPosition = getPointerPosition();
   let currentRotation = createInitialRotation(CHOICES);
   let rotationAnimation: RotationAnimation | undefined;
@@ -74,7 +75,7 @@ export function SpinnyApp() {
           class={styles.wheelSpinner}
           style={{ transform: `rotate(${currentRotation}deg)` }}
         >
-          <Wheel choices={CHOICES} />
+          <Wheel choices={CHOICES} selectedChoiceId$={selectedChoiceId$} />
         </div>
         <div
           class={styles.pointerPosition}

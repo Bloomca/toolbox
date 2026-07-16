@@ -1,3 +1,5 @@
+import type { State } from "veles";
+
 export type WheelChoice = {
   id: string;
   label: string;
@@ -12,6 +14,7 @@ export type WheelPaletteEntry = {
 export type WheelProps = {
   choices: readonly WheelChoice[];
   palette?: readonly WheelPaletteEntry[];
+  selectedChoiceId$?: State<string | null>;
 };
 
 export type WheelSegment = {

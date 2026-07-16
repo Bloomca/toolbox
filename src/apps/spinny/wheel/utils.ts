@@ -57,19 +57,54 @@ export function createSegments(
   });
 }
 
-export function createWheelGradient(segments: readonly WheelSegment[]): string {
+export function createWheelGradient(
+  segments: readonly WheelSegment[],
+  selectedChoiceId: string | null = null,
+  nonWinnerOpacity = 1,
+): string {
   const stops = segments.flatMap((segment) => {
     const angle = segment.endAngle - segment.startAngle;
     const borderWidth = Math.min(0.6, angle * 0.05);
     const colorStart = segment.startAngle + borderWidth;
+    const color =
+      selectedChoiceId !== null && segment.choice.id !== selectedChoiceId
+        ? withOpacity(segment.color.background, nonWinnerOpacity)
+        : segment.color.background;
 
     return [
       `${SEGMENT_BORDER} ${formatAngle(segment.startAngle)}deg ${formatAngle(colorStart)}deg`,
-      `${segment.color.background} ${formatAngle(colorStart)}deg ${formatAngle(segment.endAngle)}deg`,
+      `${color} ${formatAngle(colorStart)}deg ${formatAngle(segment.endAngle)}deg`,
     ];
   });
 
   return `conic-gradient(${stops.join(", ")})`;
+}
+
+export function createWinnerSegmentBackground(segment: WheelSegment): string {
+  return `radial-gradient(
+    circle closest-side,
+    ${segment.color.background} 0 calc(100% - 2px),
+    ${SEGMENT_BORDER} calc(100% - 2px) 100%
+  )`;
+}
+
+export function createWinnerSegmentEdgeGradient(expandedAngle: number): string {
+  const borderWidth = Math.min(0.6, expandedAngle * 0.05);
+  const colorEnd = expandedAngle - borderWidth;
+
+  return `conic-gradient(
+    ${SEGMENT_BORDER} 0deg ${formatAngle(borderWidth)}deg,
+    transparent ${formatAngle(borderWidth)}deg ${formatAngle(colorEnd)}deg,
+    ${SEGMENT_BORDER} ${formatAngle(colorEnd)}deg ${formatAngle(expandedAngle)}deg,
+    transparent ${formatAngle(expandedAngle)}deg 360deg
+  )`;
+}
+
+export function createWinnerSegmentMask(expandedAngle: number): string {
+  return `conic-gradient(
+    #000 0deg ${formatAngle(expandedAngle)}deg,
+    transparent ${formatAngle(expandedAngle)}deg 360deg
+  )`;
 }
 
 export function readableLabelRotation(rotation: number): number {
@@ -81,6 +116,17 @@ export function readableLabelRotation(rotation: number): number {
 
 export function degreesToRadians(degrees: number): number {
   return (degrees * Math.PI) / 180;
+}
+
+function withOpacity(color: string, opacity: number): string {
+  if (/^#[\da-f]{6}$/i.test(color)) {
+    const alpha = Math.round(Math.min(1, Math.max(0, opacity)) * 255)
+      .toString(16)
+      .padStart(2, "0");
+    return `${color}${alpha}`;
+  }
+
+  return `color-mix(in srgb, ${color} ${opacity * 100}%, transparent)`;
 }
 
 function formatAngle(angle: number): number {
