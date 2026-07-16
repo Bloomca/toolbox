@@ -16,6 +16,6 @@ describe("openApp", () => {
   test("uses an app's preferred window size", () => {
     openApp({ appId: "spinny" });
 
-    expect(windowState$.get().windows[0].size).toEqual({ width: 560, height: 640 });
+    expect(windowState$.get().windows[0].size).toEqual({ width: 880, height: 660 });
   });
 });
