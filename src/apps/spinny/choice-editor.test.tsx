@@ -50,6 +50,54 @@ describe("Spinny choice editor", () => {
     expect(container.querySelector<HTMLElement>('[data-choice-id="sun"]')?.title).toBe("Solar");
   });
 
+  test("adds a blank choice and includes it after it receives a name", () => {
+    const container = renderApp();
+    const addButton = findButton(container, "Add");
+
+    addButton.click();
+
+    const inputs = container.querySelectorAll<HTMLInputElement>("[data-toolbox-text-input]");
+    const checkboxes = container.querySelectorAll<HTMLInputElement>('input[type="checkbox"]');
+    const newInput = inputs[inputs.length - 1];
+    const newCheckbox = checkboxes[checkboxes.length - 1];
+    expect(inputs).toHaveLength(10);
+    expect(newInput.value).toBe("");
+    expect(newCheckbox.disabled).toBe(true);
+    expect(container.querySelectorAll("[data-wheel-segment]")).toHaveLength(9);
+
+    setInputValue(newInput, "Cloud");
+
+    expect(newCheckbox.checked).toBe(true);
+    expect(newCheckbox.disabled).toBe(false);
+    expect(container.querySelectorAll("[data-wheel-segment]")).toHaveLength(10);
+    expect(
+      Array.from(container.querySelectorAll<HTMLElement>("[data-choice-id]")).at(-1)?.title,
+    ).toBe("Cloud");
+  });
+
+  test("deletes a choice with an accessible icon button", () => {
+    const container = renderApp();
+    const deleteButton = container.querySelector<HTMLButtonElement>('[aria-label="Delete Sun"]');
+
+    expect(deleteButton?.textContent).toContain("−");
+    deleteButton?.click();
+
+    expect(container.querySelectorAll("[data-toolbox-text-input]")).toHaveLength(8);
+    expect(container.querySelector('[data-wheel-segment="sun"]')).toBeNull();
+  });
+
+  test("disables adding at the maximum choice count", () => {
+    const container = renderApp();
+    const addButton = findButton(container, "Add");
+
+    addButton.click();
+    addButton.click();
+    addButton.click();
+
+    expect(container.querySelectorAll("[data-toolbox-text-input]")).toHaveLength(12);
+    expect(addButton.disabled).toBe(true);
+  });
+
   test("automatically disables a blank choice", () => {
     const container = renderApp();
     const input = container.querySelector<HTMLInputElement>("[data-toolbox-text-input]");
@@ -78,6 +126,14 @@ describe("Spinny choice editor", () => {
     expect(container.querySelectorAll("[data-wheel-segment]")).toHaveLength(0);
   });
 });
+
+function findButton(container: HTMLElement, label: string): HTMLButtonElement {
+  const button = Array.from(container.querySelectorAll<HTMLButtonElement>("button")).find(
+    (button) => button.textContent?.trim() === label,
+  );
+  if (!button) throw new Error(`Expected a ${label} button.`);
+  return button;
+}
 
 function setInputValue(input: HTMLInputElement | null, value: string) {
   if (!input) throw new Error("Expected a text input.");
