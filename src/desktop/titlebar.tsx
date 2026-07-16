@@ -1,7 +1,15 @@
 import { createRef, type State } from "veles";
 
 import { Button } from "../design/button";
-import { moveWindow, type Window, setActiveWindow, closeWindow } from "../state/window";
+import {
+  closeWindow,
+  moveWindow,
+  setActiveWindow,
+  windowState$,
+  type Window,
+} from "../state/window";
+
+import styles from "./titlebar.module.css";
 
 export function Titlebar({ window$ }: { window$: State<Window> }) {
   const ref = createRef<HTMLDivElement>();
@@ -32,7 +40,15 @@ export function Titlebar({ window$ }: { window$: State<Window> }) {
   }
 
   return (
-    <div ref={ref} class="titlebar" onMouseDown={onMouseDown}>
+    <div
+      ref={ref}
+      class={windowState$.attribute((state) =>
+        state.activeWindow === window$.get().id
+          ? `${styles.titlebar} ${styles.active}`
+          : styles.titlebar,
+      )}
+      onMouseDown={onMouseDown}
+    >
       {window$.renderSelected((value) => value.appId)}
 
       <Button variant="icon" onClick={() => closeWindow(window$.get().id)}>

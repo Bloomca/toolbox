@@ -8,6 +8,8 @@ import { SudokuApp } from "../apps/sudoku";
 
 import type { State } from "veles";
 
+import styles from "./windows.module.css";
+
 export function Windows() {
   const windows$ = windowState$.map((state) => state.windows);
   return (
@@ -22,7 +24,7 @@ export function Windows() {
 function Window({ window$ }: { window$: State<Window> }) {
   return (
     <div
-      class="window"
+      class={styles.window}
       style={window$.attribute((window) => ({
         left: `${window.position.x}px`,
         top: `${window.position.y}px`,
@@ -36,7 +38,7 @@ function Window({ window$ }: { window$: State<Window> }) {
       }}
     >
       <Titlebar window$={window$} />
-      <div class="window-content">
+      <div class={styles.content}>
         {window$.renderSelected(
           (value) => value.appId,
           (appId) => (

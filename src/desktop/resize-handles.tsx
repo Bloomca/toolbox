@@ -8,6 +8,8 @@ import {
   type Window,
 } from "../state/window";
 
+import styles from "./windows.module.css";
+
 export type ResizeEdge = "top" | "right" | "bottom" | "left";
 
 const RESIZE_EDGES: readonly ResizeEdge[] = ["top", "right", "bottom", "left"];
@@ -61,7 +63,7 @@ function ResizeHandle({ window$, edge }: { window$: State<Window>; edge: ResizeE
     document.body.addEventListener("mouseup", onMouseUp);
   }
 
-  return <div class="window-resize-handle" data-resize-edge={edge} onMouseDown={onMouseDown} />;
+  return <div class={styles.resizeHandle} data-resize-edge={edge} onMouseDown={onMouseDown} />;
 }
 
 export function calculateResizedBounds(
