@@ -2,6 +2,7 @@ import { windowState$, type Window, type AppId, setActiveWindow } from "../state
 import { Titlebar } from "./titlebar";
 
 import { MarkdownReaderApp } from "../apps/markdown-reader";
+import { SpinnyApp } from "../apps/spinny";
 import { SudokuApp } from "../apps/sudoku";
 
 import type { State } from "veles";
@@ -54,6 +55,8 @@ function Application({ appId }: { appId: AppId }) {
       return <SudokuApp />;
     case "markdown-reader":
       return <MarkdownReaderApp />;
+    case "spinny":
+      return <SpinnyApp />;
     default:
       // TODO: add exhaustive check
       return null;

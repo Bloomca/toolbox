@@ -1,6 +1,6 @@
 import { createState } from "veles";
 
-export type AppId = "settings" | "sudoku" | "markdown-reader";
+export type AppId = "settings" | "sudoku" | "markdown-reader" | "spinny";
 
 // each window needs its own unique ID, because each app
 // can have multiple instances
