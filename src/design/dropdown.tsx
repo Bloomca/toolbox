@@ -18,7 +18,7 @@ export function Dropdown({ options, placeholder, ...props }: DropdownProps) {
     <span data-toolbox-dropdown="">
       <select {...props} data-toolbox-dropdown-select="">
         {[
-          <option value="" disabled selected>
+          <option value="" disabled>
             {placeholder}
           </option>,
           ...options.map((option) => (

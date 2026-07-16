@@ -13,27 +13,31 @@ type ChoiceEditorProps = {
   title$: State<string>;
   choices$: State<EditableChoice[]>;
   savedLists$: State<SavedSpinnyList[]>;
+  selectedListId$: State<string | null>;
   listsLoaded$: State<boolean>;
   disabled$: State<boolean>;
   hasDuplicateTitle$: State<boolean>;
   saveDisabled$: State<boolean>;
   onEdit: () => void;
   onSave: () => void;
+  onSelectList: (id: string) => void;
 };
 
 export function ChoiceEditor({
   title$,
   choices$,
   savedLists$,
+  selectedListId$,
   listsLoaded$,
   disabled$,
   hasDuplicateTitle$,
   saveDisabled$,
   onEdit,
   onSave,
+  onSelectList,
 }: ChoiceEditorProps) {
   const canAdd$ = choices$.map((choices) => choices.length < MAX_CHOICES);
-  const savedListOptions$ = savedLists$.combine(listsLoaded$);
+  const savedListOptions$ = savedLists$.combine(listsLoaded$, disabled$);
   const addDisabled$ = disabled$.combine(canAdd$);
   let nextChoiceId = 1;
 
@@ -69,10 +73,12 @@ export function ChoiceEditor({
       aria-label={title$.attribute((title) => `${title.trim() || "Untitled list"} editor`)}
     >
       <label class={styles.savedListsField}>
-        {savedListOptions$.render(([savedLists, listsLoaded]) => (
+        {savedListOptions$.render(([savedLists, listsLoaded, editorDisabled]) => (
           <Dropdown
             aria-label="Saved lists"
-            disabled={!listsLoaded || savedLists.length === 0}
+            disabled={editorDisabled || !listsLoaded || savedLists.length === 0}
+            value={selectedListId$.attribute((selectedListId) => selectedListId ?? "")}
+            onChange={(event) => onSelectList(event.target.value)}
             placeholder={
               listsLoaded
                 ? savedLists.length === 0

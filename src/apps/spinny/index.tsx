@@ -34,6 +34,7 @@ export function SpinnyApp() {
   const pointerRef = createRef<HTMLDivElement>();
   const listTitle$ = createState("New List");
   const savedLists$ = createState<SavedSpinnyList[]>([]);
+  const selectedListId$ = createState<string | null>(null);
   const listsLoaded$ = createState(false);
   const isSaving$ = createState(false);
   const choices$ = createState<EditableChoice[]>(INITIAL_CHOICES.map((choice) => ({ ...choice })));
@@ -124,7 +125,8 @@ export function SpinnyApp() {
 
     isSaving$.set(true);
     try {
-      await saveSpinnyList({ title, choices: choices$.get() });
+      const savedList = await saveSpinnyList({ title, choices: choices$.get() });
+      if (mounted) selectedListId$.set(savedList.id);
     } catch (error) {
       console.error("Could not save Spinny list.", error);
     }
@@ -137,6 +139,18 @@ export function SpinnyApp() {
     } finally {
       if (mounted) isSaving$.set(false);
     }
+  }
+
+  function selectList(id: string) {
+    if (isSpinning$.get()) return;
+
+    const list = savedLists$.get().find((list) => list.id === id);
+    if (!list) return;
+
+    selectedListId$.set(list.id);
+    listTitle$.set(list.title);
+    choices$.set(list.choices.map((choice) => ({ ...choice })));
+    clearResult();
   }
 
   return (
@@ -192,12 +206,14 @@ export function SpinnyApp() {
         title$={listTitle$}
         choices$={choices$}
         savedLists$={savedLists$}
+        selectedListId$={selectedListId$}
         listsLoaded$={listsLoaded$}
         disabled$={isSpinning$}
         hasDuplicateTitle$={hasDuplicateTitle$}
         saveDisabled$={saveDisabled$}
         onEdit={clearResult}
         onSave={saveList}
+        onSelectList={selectList}
       />
     </div>
   );
