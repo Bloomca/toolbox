@@ -24,7 +24,7 @@ describe("Spinny choice editor", () => {
   test("renders the choices as checked editable rows", () => {
     const container = renderApp();
     const checkboxes = container.querySelectorAll<HTMLInputElement>('input[type="checkbox"]');
-    const inputs = container.querySelectorAll<HTMLInputElement>("[data-toolbox-text-input]");
+    const inputs = container.querySelectorAll<HTMLInputElement>('[aria-label="Choice name"]');
 
     expect(checkboxes).toHaveLength(9);
     expect(Array.from(checkboxes).every((checkbox) => checkbox.checked)).toBe(true);
@@ -41,9 +41,20 @@ describe("Spinny choice editor", () => {
     ]);
   });
 
+  test("starts with an editable list title", () => {
+    const container = renderApp();
+    const titleInput = container.querySelector<HTMLInputElement>('[aria-label="List title"]');
+
+    expect(titleInput?.value).toBe("New List");
+    setInputValue(titleInput, "Weekend choices");
+    expect(container.querySelector("aside")?.getAttribute("aria-label")).toBe(
+      "Weekend choices editor",
+    );
+  });
+
   test("updates the wheel label immediately", () => {
     const container = renderApp();
-    const input = container.querySelector<HTMLInputElement>("[data-toolbox-text-input]");
+    const input = container.querySelector<HTMLInputElement>('[aria-label="Choice name"]');
 
     setInputValue(input, "Solar");
 
@@ -56,7 +67,7 @@ describe("Spinny choice editor", () => {
 
     addButton.click();
 
-    const inputs = container.querySelectorAll<HTMLInputElement>("[data-toolbox-text-input]");
+    const inputs = container.querySelectorAll<HTMLInputElement>('[aria-label="Choice name"]');
     const checkboxes = container.querySelectorAll<HTMLInputElement>('input[type="checkbox"]');
     const newInput = inputs[inputs.length - 1];
     const newCheckbox = checkboxes[checkboxes.length - 1];
@@ -82,7 +93,7 @@ describe("Spinny choice editor", () => {
     expect(deleteButton?.textContent).toContain("−");
     deleteButton?.click();
 
-    expect(container.querySelectorAll("[data-toolbox-text-input]")).toHaveLength(8);
+    expect(container.querySelectorAll('[aria-label="Choice name"]')).toHaveLength(8);
     expect(container.querySelector('[data-wheel-segment="sun"]')).toBeNull();
   });
 
@@ -94,13 +105,13 @@ describe("Spinny choice editor", () => {
     addButton.click();
     addButton.click();
 
-    expect(container.querySelectorAll("[data-toolbox-text-input]")).toHaveLength(12);
+    expect(container.querySelectorAll('[aria-label="Choice name"]')).toHaveLength(12);
     expect(addButton.disabled).toBe(true);
   });
 
   test("automatically disables a blank choice", () => {
     const container = renderApp();
-    const input = container.querySelector<HTMLInputElement>("[data-toolbox-text-input]");
+    const input = container.querySelector<HTMLInputElement>('[aria-label="Choice name"]');
     const checkbox = container.querySelector<HTMLInputElement>('input[type="checkbox"]');
 
     setInputValue(input, "   ");

@@ -30,6 +30,7 @@ const INITIAL_CHOICES: readonly EditableChoice[] = [
 export function SpinnyApp() {
   const wheelRef = createRef<HTMLDivElement>();
   const pointerRef = createRef<HTMLDivElement>();
+  const listTitle$ = createState("New List");
   const choices$ = createState<EditableChoice[]>(INITIAL_CHOICES.map((choice) => ({ ...choice })));
   const activeChoices$ = choices$.map(getActiveChoices);
   const canSpin$ = activeChoices$.map((choices) => choices.length >= MINIMUM_SPIN_CHOICES);
@@ -128,7 +129,12 @@ export function SpinnyApp() {
         </div>
       </section>
 
-      <ChoiceEditor choices$={choices$} disabled$={isSpinning$} onEdit={clearResult} />
+      <ChoiceEditor
+        title$={listTitle$}
+        choices$={choices$}
+        disabled$={isSpinning$}
+        onEdit={clearResult}
+      />
     </div>
   );
 }
