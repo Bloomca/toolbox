@@ -3,21 +3,27 @@ import type { State } from "veles";
 import { Button } from "../../design/button";
 import { Checkbox } from "../../design/checkbox";
 import { TextInput } from "../../design/text-input";
-import { MAX_CHOICES, type WheelChoice } from "./wheel";
+import type { EditableChoice } from "./types";
+import { MAX_CHOICES } from "./wheel";
 import styles from "./style.module.css";
-
-export type EditableChoice = WheelChoice & {
-  included: boolean;
-};
 
 type ChoiceEditorProps = {
   title$: State<string>;
   choices$: State<EditableChoice[]>;
   disabled$: State<boolean>;
+  saveDisabled$: State<boolean>;
   onEdit: () => void;
+  onSave: () => void;
 };
 
-export function ChoiceEditor({ title$, choices$, disabled$, onEdit }: ChoiceEditorProps) {
+export function ChoiceEditor({
+  title$,
+  choices$,
+  disabled$,
+  saveDisabled$,
+  onEdit,
+  onSave,
+}: ChoiceEditorProps) {
   const canAdd$ = choices$.map((choices) => choices.length < MAX_CHOICES);
   const addDisabled$ = disabled$.combine(canAdd$);
   let nextChoiceId = 1;
@@ -65,6 +71,11 @@ export function ChoiceEditor({ title$, choices$, disabled$, onEdit }: ChoiceEdit
           }}
         />
       </label>
+      <div class={styles.listSaveAction}>
+        <Button disabled={saveDisabled$.attribute()} onClick={onSave}>
+          Save
+        </Button>
+      </div>
       <h2 class={styles.choiceEditorTitle}>Choices</h2>
       <ul class={styles.choiceList}>
         {choices$.renderEach({ key: "id" }, ({ elementState: choice$ }) => (

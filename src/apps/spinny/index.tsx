@@ -1,8 +1,9 @@
-import { createRef, createState, onUnmount } from "veles";
+import { createRef, createState, onMount, onUnmount } from "veles";
 
 import { Button } from "../../design/button";
-import { ChoiceEditor, isChoiceValid, type EditableChoice } from "./choice-editor";
-import { appendSpinHistory } from "./storage";
+import { ChoiceEditor, isChoiceValid } from "./choice-editor";
+import { appendSpinHistory, normalizeListTitle, readSpinnyLists, saveSpinnyList } from "./storage";
+import type { EditableChoice, SavedSpinnyList } from "./types";
 import {
   animatePointer,
   animateRotation,
@@ -32,11 +33,15 @@ export function SpinnyApp() {
   const wheelRef = createRef<HTMLDivElement>();
   const pointerRef = createRef<HTMLDivElement>();
   const listTitle$ = createState("New List");
+  const savedLists$ = createState<SavedSpinnyList[]>([]);
+  const listsLoaded$ = createState(false);
+  const isSaving$ = createState(false);
   const choices$ = createState<EditableChoice[]>(INITIAL_CHOICES.map((choice) => ({ ...choice })));
   const activeChoices$ = choices$.map(getActiveChoices);
   const canSpin$ = activeChoices$.map((choices) => choices.length >= MINIMUM_SPIN_CHOICES);
   const isSpinning$ = createState(false);
   const spinDisabled$ = isSpinning$.combine(canSpin$);
+  const saveDisabled$ = listTitle$.combine(savedLists$, isSpinning$, isSaving$, listsLoaded$);
   const result$ = createState<WheelChoice | null>(null);
   const selectedChoiceId$ = result$.map((result) => result?.id ?? null);
   const resultMessage$ = result$.combine(canSpin$);
@@ -45,6 +50,17 @@ export function SpinnyApp() {
   let rotationAnimation: RotationAnimation | undefined;
   let pointerAnimation: Animation | undefined;
   let mounted = true;
+
+  onMount(() => {
+    void readSpinnyLists()
+      .then((lists) => {
+        if (mounted) savedLists$.set(lists);
+      })
+      .catch((error) => console.error("Could not load Spinny lists.", error))
+      .finally(() => {
+        if (mounted) listsLoaded$.set(true);
+      });
+  });
 
   onUnmount(() => {
     mounted = false;
@@ -83,6 +99,36 @@ export function SpinnyApp() {
 
   function clearResult() {
     result$.set(null);
+  }
+
+  async function saveList() {
+    const title = listTitle$.get().trim();
+    const savedLists = savedLists$.get();
+    if (
+      !listsLoaded$.get() ||
+      isSaving$.get() ||
+      isSpinning$.get() ||
+      !title ||
+      hasListWithTitle(savedLists, title)
+    ) {
+      return;
+    }
+
+    isSaving$.set(true);
+    try {
+      await saveSpinnyList({ title, choices: choices$.get() });
+    } catch (error) {
+      console.error("Could not save Spinny list.", error);
+    }
+
+    try {
+      const lists = await readSpinnyLists();
+      if (mounted) savedLists$.set(lists);
+    } catch (error) {
+      console.error("Could not reload Spinny lists.", error);
+    } finally {
+      if (mounted) isSaving$.set(false);
+    }
   }
 
   return (
@@ -138,10 +184,24 @@ export function SpinnyApp() {
         title$={listTitle$}
         choices$={choices$}
         disabled$={isSpinning$}
+        saveDisabled$={saveDisabled$.map(
+          ([title, savedLists, isSpinning, isSaving, listsLoaded]) =>
+            !listsLoaded ||
+            isSpinning ||
+            isSaving ||
+            !normalizeListTitle(title) ||
+            hasListWithTitle(savedLists, title),
+        )}
         onEdit={clearResult}
+        onSave={saveList}
       />
     </div>
   );
+}
+
+function hasListWithTitle(lists: readonly SavedSpinnyList[], title: string): boolean {
+  const normalizedTitle = normalizeListTitle(title);
+  return lists.some((list) => normalizeListTitle(list.title) === normalizedTitle);
 }
 
 function getActiveChoices(choices: readonly EditableChoice[]): WheelChoice[] {
