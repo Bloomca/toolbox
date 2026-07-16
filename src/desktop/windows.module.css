@@ -1,12 +1,19 @@
-.window {
+.container {
   position: absolute;
+  overflow: visible;
+}
+
+.window {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
   border: 1px solid #2f211d;
   border-radius: 6px;
   background-color: var(--window-background-colour);
-  overflow: hidden;
 }
 
-.window[data-active] {
+.container[data-active] .window {
   box-shadow: 6px 6px 6px rgb(87 72 72 / 33%);
 }
 
@@ -23,34 +30,34 @@
 
 .resizeHandle[data-resize-edge="top"],
 .resizeHandle[data-resize-edge="bottom"] {
-  right: 6px;
-  left: 6px;
+  right: 0;
+  left: 0;
   height: 6px;
   cursor: ns-resize;
 }
 
 .resizeHandle[data-resize-edge="top"] {
-  top: 0;
+  top: -6px;
 }
 
 .resizeHandle[data-resize-edge="bottom"] {
-  bottom: 0;
+  bottom: -6px;
 }
 
 .resizeHandle[data-resize-edge="right"],
 .resizeHandle[data-resize-edge="left"] {
-  top: 6px;
-  bottom: 6px;
+  top: 0;
+  bottom: 0;
   width: 6px;
   cursor: ew-resize;
 }
 
 .resizeHandle[data-resize-edge="right"] {
-  right: 0;
+  right: -6px;
 }
 
 .resizeHandle[data-resize-edge="left"] {
-  left: 0;
+  left: -6px;
 }
 
 .resizeHandle[data-resize-edge="top-left"],
@@ -58,30 +65,30 @@
 .resizeHandle[data-resize-edge="bottom-right"],
 .resizeHandle[data-resize-edge="bottom-left"] {
   z-index: 3;
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
 }
 
 .resizeHandle[data-resize-edge="top-left"] {
-  top: 0;
-  left: 0;
+  top: -8px;
+  left: -8px;
   cursor: nwse-resize;
 }
 
 .resizeHandle[data-resize-edge="top-right"] {
-  top: 0;
-  right: 0;
+  top: -8px;
+  right: -8px;
   cursor: nesw-resize;
 }
 
 .resizeHandle[data-resize-edge="bottom-right"] {
-  right: 0;
-  bottom: 0;
+  right: -8px;
+  bottom: -8px;
   cursor: nwse-resize;
 }
 
 .resizeHandle[data-resize-edge="bottom-left"] {
-  bottom: 0;
-  left: 0;
+  bottom: -8px;
+  left: -8px;
   cursor: nesw-resize;
 }
