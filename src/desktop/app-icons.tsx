@@ -6,6 +6,7 @@ export function AppIcons() {
       <AppIcon name="Settings" appId="settings" />
       <AppIcon name="Sudoku" appId="sudoku" />
       <AppIcon name="Markdown" appId="markdown-reader" />
+      <AppIcon name="Spinny" appId="spinny" />
     </div>
   );
 }
