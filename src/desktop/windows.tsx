@@ -24,7 +24,7 @@ export function Windows() {
 function Window({ window$ }: { window$: State<Window> }) {
   return (
     <div
-      class={styles.window}
+      class={styles.container}
       style={window$.attribute((window) => ({
         left: `${window.position.x}px`,
         top: `${window.position.y}px`,
@@ -37,16 +37,18 @@ function Window({ window$ }: { window$: State<Window> }) {
         setActiveWindow(window$.get().id);
       }}
     >
-      <Titlebar window$={window$} />
-      <div class={styles.content}>
-        {window$.renderSelected(
-          (value) => value.appId,
-          (appId) => (
-            <Application appId={appId} />
-          ),
-        )}
-      </div>
       <ResizeHandles window$={window$} />
+      <div class={styles.window}>
+        <Titlebar window$={window$} />
+        <div class={styles.content}>
+          {window$.renderSelected(
+            (value) => value.appId,
+            (appId) => (
+              <Application appId={appId} />
+            ),
+          )}
+        </div>
+      </div>
     </div>
   );
 }
