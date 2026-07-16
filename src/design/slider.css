@@ -1,0 +1,93 @@
+[data-toolbox-slider] {
+  width: 100%;
+  min-width: 0;
+  height: 32px;
+  margin: 0;
+  appearance: none;
+  box-sizing: border-box;
+  color: #2f211d;
+  background: transparent;
+  cursor: pointer;
+}
+
+[data-toolbox-slider]::-webkit-slider-runnable-track {
+  height: 8px;
+  border: 1px solid #5f4634;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #d7b88f 0%, #f7e2c4 100%);
+  box-shadow: inset 1px 1px 2px rgb(47 33 29 / 0.28);
+}
+
+[data-toolbox-slider]::-webkit-slider-thumb {
+  width: 22px;
+  height: 22px;
+  margin-top: -8px;
+  appearance: none;
+  border: 1px solid #2f211d;
+  border-radius: 6px;
+  background: #feb159;
+  box-shadow:
+    1px 1px #c5af9b,
+    3px 3px rgb(87 72 72 / 0.72);
+}
+
+[data-toolbox-slider]::-moz-range-track {
+  height: 6px;
+  border: 1px solid #5f4634;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #d7b88f 0%, #f7e2c4 100%);
+  box-shadow: inset 1px 1px 2px rgb(47 33 29 / 0.28);
+}
+
+[data-toolbox-slider]::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border: 1px solid #2f211d;
+  border-radius: 6px;
+  background: #feb159;
+  box-shadow:
+    1px 1px #c5af9b,
+    3px 3px rgb(87 72 72 / 0.72);
+}
+
+[data-toolbox-slider]:focus-visible {
+  outline: none;
+}
+
+[data-toolbox-slider]:focus-visible::-webkit-slider-thumb {
+  outline: 2px solid #9c5812;
+  outline-offset: 3px;
+}
+
+[data-toolbox-slider]:focus-visible::-moz-range-thumb {
+  outline: 2px solid #9c5812;
+  outline-offset: 3px;
+}
+
+[data-toolbox-slider]:active::-webkit-slider-thumb {
+  background: #ef9c3e;
+  transform: translate(1px, 1px);
+  box-shadow:
+    0 0 #c5af9b,
+    2px 2px rgb(87 72 72 / 0.72);
+}
+
+[data-toolbox-slider]:active::-moz-range-thumb {
+  background: #ef9c3e;
+  transform: translate(1px, 1px);
+  box-shadow:
+    0 0 #c5af9b,
+    2px 2px rgb(87 72 72 / 0.72);
+}
+
+[data-toolbox-slider]:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-toolbox-slider]::-webkit-slider-thumb,
+  [data-toolbox-slider]::-moz-range-thumb {
+    transition: none;
+  }
+}
