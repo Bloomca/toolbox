@@ -204,8 +204,16 @@
 }
 
 .savedListsField {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 10px;
   margin-top: 4px;
   margin-bottom: 14px;
+}
+
+.savedListsField > [data-toolbox-dropdown] {
+  flex: 1;
 }
 
 .listTitleField {

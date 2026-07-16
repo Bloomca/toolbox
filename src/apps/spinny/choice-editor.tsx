@@ -17,6 +17,7 @@ type ChoiceEditorProps = {
   listsLoaded$: State<boolean>;
   disabled$: State<boolean>;
   saveDisabled$: State<boolean>;
+  onCreateNewList: () => void;
   onDeleteList: () => void;
   onEdit: () => void;
   onSave: () => void;
@@ -32,6 +33,7 @@ export function ChoiceEditor({
   listsLoaded$,
   disabled$,
   saveDisabled$,
+  onCreateNewList,
   onDeleteList,
   onEdit,
   onSave,
@@ -40,6 +42,9 @@ export function ChoiceEditor({
 }: ChoiceEditorProps) {
   const canAdd$ = choices$.map((choices) => choices.length < MAX_CHOICES);
   const savedListOptions$ = savedLists$.combine(listsLoaded$, disabled$, selectedListId$);
+  const newListDisabled$ = selectedListId$
+    .combine(disabled$)
+    .map(([selectedListId, editorDisabled]) => !selectedListId || editorDisabled);
   const addDisabled$ = disabled$.combine(canAdd$);
   let nextChoiceId = 1;
 
@@ -74,7 +79,7 @@ export function ChoiceEditor({
       class={styles.choiceEditor}
       aria-label={title$.attribute((title) => `${title.trim() || "Untitled list"} editor`)}
     >
-      <label class={styles.savedListsField}>
+      <div class={styles.savedListsField}>
         {savedListOptions$.render(([savedLists, listsLoaded, editorDisabled, selectedListId]) => (
           <Dropdown
             aria-label="Saved lists"
@@ -86,7 +91,10 @@ export function ChoiceEditor({
             options={savedLists.map((list) => ({ value: list.id, label: list.title }))}
           />
         ))}
-      </label>
+        <Button disabled={newListDisabled$.attribute()} onClick={onCreateNewList}>
+          New
+        </Button>
+      </div>
       <label class={styles.listTitleField}>
         <TextInput
           aria-label="List title"
