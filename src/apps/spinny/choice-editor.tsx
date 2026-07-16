@@ -11,12 +11,13 @@ export type EditableChoice = WheelChoice & {
 };
 
 type ChoiceEditorProps = {
+  title$: State<string>;
   choices$: State<EditableChoice[]>;
   disabled$: State<boolean>;
   onEdit: () => void;
 };
 
-export function ChoiceEditor({ choices$, disabled$, onEdit }: ChoiceEditorProps) {
+export function ChoiceEditor({ title$, choices$, disabled$, onEdit }: ChoiceEditorProps) {
   const canAdd$ = choices$.map((choices) => choices.length < MAX_CHOICES);
   const addDisabled$ = disabled$.combine(canAdd$);
   let nextChoiceId = 1;
@@ -48,7 +49,22 @@ export function ChoiceEditor({ choices$, disabled$, onEdit }: ChoiceEditorProps)
   }
 
   return (
-    <aside class={styles.choiceEditor} aria-label="Wheel choices editor">
+    <aside
+      class={styles.choiceEditor}
+      aria-label={title$.attribute((title) => `${title.trim() || "Untitled list"} editor`)}
+    >
+      <label class={styles.listTitleField}>
+        <span class={styles.listTitleLabel}>List title</span>
+        <TextInput
+          aria-label="List title"
+          disabled={disabled$.attribute()}
+          value={title$.attribute()}
+          onInput={(event) => {
+            title$.set(event.target.value);
+            onEdit();
+          }}
+        />
+      </label>
       <h2 class={styles.choiceEditorTitle}>Choices</h2>
       <ul class={styles.choiceList}>
         {choices$.renderEach({ key: "id" }, ({ elementState: choice$ }) => (
