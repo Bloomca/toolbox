@@ -41,7 +41,15 @@ export function SpinnyApp() {
   const canSpin$ = activeChoices$.map((choices) => choices.length >= MINIMUM_SPIN_CHOICES);
   const isSpinning$ = createState(false);
   const spinDisabled$ = isSpinning$.combine(canSpin$);
-  const saveDisabled$ = listTitle$.combine(savedLists$, isSpinning$, isSaving$, listsLoaded$);
+  const hasDuplicateTitle$ = listTitle$
+    .combine(savedLists$)
+    .map(([title, savedLists]) => hasListWithTitle(savedLists, title));
+  const saveDisabled$ = listTitle$
+    .combine(hasDuplicateTitle$, isSpinning$, isSaving$, listsLoaded$)
+    .map(
+      ([title, hasDuplicateTitle, isSpinning, isSaving, listsLoaded]) =>
+        !listsLoaded || hasDuplicateTitle || isSpinning || isSaving || !normalizeListTitle(title),
+    );
   const result$ = createState<WheelChoice | null>(null);
   const selectedChoiceId$ = result$.map((result) => result?.id ?? null);
   const resultMessage$ = result$.combine(canSpin$);
@@ -184,14 +192,8 @@ export function SpinnyApp() {
         title$={listTitle$}
         choices$={choices$}
         disabled$={isSpinning$}
-        saveDisabled$={saveDisabled$.map(
-          ([title, savedLists, isSpinning, isSaving, listsLoaded]) =>
-            !listsLoaded ||
-            isSpinning ||
-            isSaving ||
-            !normalizeListTitle(title) ||
-            hasListWithTitle(savedLists, title),
-        )}
+        hasDuplicateTitle$={hasDuplicateTitle$}
+        saveDisabled$={saveDisabled$}
         onEdit={clearResult}
         onSave={saveList}
       />
