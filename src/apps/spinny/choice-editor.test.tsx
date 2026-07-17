@@ -352,6 +352,31 @@ describe("Spinny choice editor", () => {
     });
   });
 
+  test("adds indentation for each sub-choice nesting level", () => {
+    const container = renderApp();
+    container.querySelector<HTMLButtonElement>('[aria-label="Options for Sun"]')?.click();
+    container.querySelector<HTMLButtonElement>('[aria-label="Add sub-choice to Sun"]')?.click();
+
+    const nestedInput = container.querySelectorAll<HTMLInputElement>(
+      '[aria-label="Choice name"]',
+    )[1];
+    setInputValue(nestedInput, "Sunrise");
+    container.querySelector<HTMLButtonElement>('[aria-label="Options for Sunrise"]')?.click();
+    container.querySelector<HTMLButtonElement>('[aria-label="Add sub-choice to Sunrise"]')?.click();
+
+    const firstThreeRows = Array.from(
+      container.querySelectorAll<HTMLInputElement>('[aria-label="Choice name"]'),
+    )
+      .slice(0, 3)
+      .map((input) => input.closest<HTMLElement>("li"));
+
+    expect(firstThreeRows.map((row) => row?.style.getPropertyValue("--choice-indent"))).toEqual([
+      "0px",
+      "24px",
+      "48px",
+    ]);
+  });
+
   test("deleting a parent also deletes its nested choices", () => {
     const container = renderApp();
     container.querySelector<HTMLButtonElement>('[aria-label="Options for Sun"]')?.click();
