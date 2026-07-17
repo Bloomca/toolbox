@@ -27,8 +27,9 @@ describe("Tooltip", () => {
     });
 
     const target = container.querySelector<HTMLElement>("[data-toolbox-tooltip]");
+    const button = container.querySelector<HTMLButtonElement>("button");
     const tooltip = document.body.querySelector<HTMLElement>('[role="tooltip"]');
-    expect(container.querySelector("button")?.textContent).toBe("Target");
+    expect(button?.textContent).toBe("Target");
     expect(container.querySelector('[role="tooltip"]')).toBeNull();
     expect(tooltip?.textContent).toBe("Helpful text");
     expect(tooltip?.getAttribute("data-toolbox-tooltip-placement")).toBe("right");
@@ -37,7 +38,14 @@ describe("Tooltip", () => {
     expect(tooltip?.hasAttribute("data-visible")).toBe(true);
     expect(tooltip?.style.left).not.toBe("");
     expect(tooltip?.style.top).not.toBe("");
+
+    button?.click();
+    expect(tooltip?.hasAttribute("data-visible")).toBe(false);
+
     target?.dispatchEvent(new MouseEvent("mouseleave"));
+    button?.focus();
+    expect(tooltip?.hasAttribute("data-visible")).toBe(true);
+    button?.click();
     expect(tooltip?.hasAttribute("data-visible")).toBe(false);
   });
 
