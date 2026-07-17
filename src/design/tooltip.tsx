@@ -78,10 +78,14 @@ export function Tooltip({ content, placement = "top", hidden, children }: Toolti
     startPositionTracking();
   }
 
-  function hideTooltipIfInactive() {
-    if (hovered || focused) return;
+  function hideTooltip() {
     tooltipRef.current?.removeAttribute("data-visible");
     stopPositionTracking();
+  }
+
+  function hideTooltipIfInactive() {
+    if (hovered || focused) return;
+    hideTooltip();
   }
 
   onUnmount(stopPositionTracking);
@@ -106,6 +110,7 @@ export function Tooltip({ content, placement = "top", hidden, children }: Toolti
         focused = false;
         hideTooltipIfInactive();
       }}
+      onClick={hideTooltip}
     >
       {children}
       <Portal portalNode={document.body}>
