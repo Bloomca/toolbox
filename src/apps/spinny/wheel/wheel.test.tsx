@@ -131,6 +131,34 @@ describe("Spinny", () => {
       "120deg",
     );
   });
+
+  test("makes selectable subcategory segments clickable and keyboard accessible", () => {
+    const onChoiceSelect = vi.fn();
+    const choices: WheelChoice[] = [
+      { id: "category", label: "Category", weight: 1 },
+      { id: "other", label: "Other", weight: 1 },
+    ];
+    const container = mount(
+      <Wheel
+        choices={choices}
+        selectableChoiceIds={new Set(["category"])}
+        onChoiceSelect={onChoiceSelect}
+      />,
+    );
+    const categorySegment = container.querySelector<SVGPathElement>(
+      '[data-wheel-category="category"]',
+    );
+
+    expect(categorySegment?.getAttribute("d")).not.toBe("");
+    expect(categorySegment?.getAttribute("tabindex")).toBe("0");
+    expect(container.querySelector('[data-choice-id="category"]')?.textContent).toContain("›");
+    expect(container.querySelector('[data-wheel-category="other"]')).toBeNull();
+
+    categorySegment?.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+    categorySegment?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    expect(onChoiceSelect).toHaveBeenNthCalledWith(1, "category");
+    expect(onChoiceSelect).toHaveBeenNthCalledWith(2, "category");
+  });
 });
 
 describe("wheel palette", () => {

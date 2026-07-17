@@ -24,6 +24,70 @@
   gap: 16px;
 }
 
+.wheelBreadcrumbs {
+  width: min(100%, 480px);
+  min-height: 28px;
+  flex: 0 0 auto;
+  color: #2f211d;
+  font-size: 0.9rem;
+}
+
+.wheelBreadcrumbs ol {
+  display: flex;
+  overflow: hidden;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin: 0;
+  padding: 0 8px;
+  list-style: none;
+}
+
+.wheelBreadcrumbs li {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 7px;
+}
+
+.wheelBreadcrumbs button {
+  overflow: hidden;
+  max-width: 140px;
+  padding: 3px 5px;
+  border: 0;
+  border-radius: 4px;
+  color: #274c77;
+  background: transparent;
+  font: inherit;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.wheelBreadcrumbs button:hover,
+.wheelBreadcrumbs button:focus-visible {
+  background: #bfdbfe;
+  outline: none;
+}
+
+.wheelBreadcrumbs button:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+.wheelBreadcrumbs [aria-current="page"] {
+  overflow: hidden;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wheelBreadcrumbSeparator {
+  color: rgb(47 33 29 / 0.58);
+  font-weight: 700;
+}
+
 .wheelStage {
   position: relative;
   width: min(100%, 480px);
@@ -63,6 +127,7 @@
   border: 1px solid #5f4634;
   border-radius: 50%;
   background: #f0cfa7;
+  pointer-events: none;
   transform: translate(-50%, -50%);
 }
 
@@ -96,6 +161,37 @@
     filter 180ms ease-out;
 }
 
+.wheelInteraction {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.wheelCategorySegment {
+  fill: rgb(255 255 255 / 0.001);
+  stroke: transparent;
+  stroke-width: 0.6px;
+  cursor: pointer;
+  transition:
+    fill 100ms ease-out,
+    stroke 100ms ease-out;
+}
+
+.wheelCategorySegment:hover,
+.wheelCategorySegment:focus-visible {
+  fill: rgb(255 255 255 / 0.18);
+  stroke: rgb(47 33 29 / 0.58);
+  outline: none;
+}
+
+.wheelStage[aria-busy="true"] .wheelCategorySegment {
+  pointer-events: none;
+  cursor: default;
+}
+
 .wheelLabel {
   position: absolute;
   z-index: 3;
@@ -108,6 +204,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   opacity: 1;
+  pointer-events: none;
   user-select: none;
 }
 

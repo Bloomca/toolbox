@@ -377,6 +377,49 @@ describe("Spinny choice editor", () => {
     ]);
   });
 
+  test("opens legal subcategories from the wheel and shows breadcrumbs", () => {
+    const container = renderApp();
+    const breadcrumbs = container.querySelector<HTMLElement>('[aria-label="Wheel location"]');
+    expect(breadcrumbs?.querySelector('[aria-current="page"]')?.textContent).toBe("New List");
+
+    container.querySelector<HTMLButtonElement>('[aria-label="Options for Sun"]')?.click();
+    const addSubChoiceButton = container.querySelector<HTMLButtonElement>(
+      '[aria-label="Add sub-choice to Sun"]',
+    );
+    addSubChoiceButton?.click();
+    const firstSubChoiceInput = container.querySelectorAll<HTMLInputElement>(
+      '[aria-label="Choice name"]',
+    )[1];
+    setInputValue(firstSubChoiceInput, "Sunrise");
+    expect(container.querySelector('[data-wheel-category="sun"]')).toBeNull();
+
+    addSubChoiceButton?.click();
+    const secondSubChoiceInput = container.querySelectorAll<HTMLInputElement>(
+      '[aria-label="Choice name"]',
+    )[2];
+    setInputValue(secondSubChoiceInput, "Sunset");
+
+    const sunSegment = container.querySelector<SVGPathElement>('[data-wheel-category="sun"]');
+    expect(sunSegment?.getAttribute("aria-label")).toBe("Open Sun subcategory");
+    sunSegment?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+
+    expect(breadcrumbs?.textContent?.replace(/\s/g, "")).toBe("NewList>Sun");
+    expect(breadcrumbs?.querySelector('[aria-current="page"]')?.textContent).toBe("Sun");
+    expect(
+      Array.from(
+        container.querySelectorAll<HTMLElement>("[data-choice-id]"),
+        (choice) => choice.title,
+      ),
+    ).toEqual(["Sunrise", "Sunset"]);
+
+    breadcrumbs
+      ?.querySelector<HTMLButtonElement>('button[aria-label="Show New List choices"]')
+      ?.click();
+
+    expect(breadcrumbs?.querySelector('[aria-current="page"]')?.textContent).toBe("New List");
+    expect(container.querySelectorAll("[data-choice-id]")).toHaveLength(9);
+  });
+
   test("deleting a parent also deletes its nested choices", () => {
     const container = renderApp();
     container.querySelector<HTMLButtonElement>('[aria-label="Options for Sun"]')?.click();
