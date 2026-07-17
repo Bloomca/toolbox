@@ -399,9 +399,9 @@ describe("Spinny choice editor", () => {
     )[2];
     setInputValue(secondSubChoiceInput, "Sunset");
 
-    const sunSegment = container.querySelector<SVGPathElement>('[data-wheel-category="sun"]');
+    const sunSegment = container.querySelector<HTMLButtonElement>('[data-wheel-category="sun"]');
     expect(sunSegment?.getAttribute("aria-label")).toBe("Open Sun subcategory");
-    sunSegment?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    sunSegment?.click();
 
     expect(breadcrumbs?.textContent?.replace(/\s/g, "")).toBe("NewList>Sun");
     expect(breadcrumbs?.querySelector('[aria-current="page"]')?.textContent).toBe("Sun");

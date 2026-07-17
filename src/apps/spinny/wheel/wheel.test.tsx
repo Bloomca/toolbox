@@ -145,19 +145,18 @@ describe("Spinny", () => {
         onChoiceSelect={onChoiceSelect}
       />,
     );
-    const categorySegment = container.querySelector<SVGPathElement>(
+    const categorySegment = container.querySelector<HTMLButtonElement>(
       '[data-wheel-category="category"]',
     );
 
-    expect(categorySegment?.getAttribute("d")).not.toBe("");
-    expect(categorySegment?.getAttribute("tabindex")).toBe("0");
+    expect(categorySegment?.style.clipPath).toContain("polygon");
+    expect(categorySegment?.type).toBe("button");
     expect(container.querySelector('[data-choice-id="category"]')?.textContent).toContain("›");
     expect(container.querySelector('[data-wheel-category="other"]')).toBeNull();
 
-    categorySegment?.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
-    categorySegment?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-    expect(onChoiceSelect).toHaveBeenNthCalledWith(1, "category");
-    expect(onChoiceSelect).toHaveBeenNthCalledWith(2, "category");
+    categorySegment?.click();
+    expect(onChoiceSelect).toHaveBeenCalledOnce();
+    expect(onChoiceSelect).toHaveBeenCalledWith("category");
   });
 });
 

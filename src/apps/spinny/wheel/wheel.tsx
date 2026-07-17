@@ -17,8 +17,9 @@ const LABEL_RADIUS_PERCENT = 31;
 const WINNER_ANGLE_OVERLAP_DEGREES = 1.25;
 const WINNER_SCALE = 1.03;
 const NON_WINNER_OPACITY = 0.85;
-const SVG_CENTER = 50;
-const SVG_RADIUS = 50;
+const WHEEL_CENTER_PERCENT = 50;
+const WHEEL_RADIUS_PERCENT = 50;
+const SEGMENT_HIT_AREA_MAXIMUM_STEP_DEGREES = 6;
 
 export function Wheel({
   choices,
@@ -56,15 +57,11 @@ export function Wheel({
         />
       ))}
       {selectableSegments.length > 0 ? (
-        <svg
-          class={styles.wheelInteraction}
-          viewBox="0 0 100 100"
-          aria-label="Subcategory navigation"
-        >
+        <div class={styles.wheelInteraction} role="group" aria-label="Subcategory navigation">
           {selectableSegments.map((segment) => (
             <CategorySegment segment={segment} onSelect={onChoiceSelect!} />
           ))}
-        </svg>
+        </div>
       ) : null}
     </div>
   );
@@ -140,51 +137,35 @@ function CategorySegment({
   }
 
   return (
-    <path
+    <button
       class={styles.wheelCategorySegment}
-      d={createSegmentPath(segment)}
-      role="button"
-      tabIndex={0}
+      type="button"
       aria-label={`Open ${segment.choice.label} subcategory`}
       data-wheel-category={segment.choice.id}
+      style={{ "clip-path": createSegmentClipPath(segment) }}
       onClick={select}
-      onKeyDown={(event) => {
-        if (event.key !== "Enter" && event.key !== " ") return;
-        event.preventDefault();
-        select();
-      }}
     />
   );
 }
 
-function createSegmentPath(segment: WheelSegment): string {
+function createSegmentClipPath(segment: WheelSegment): string {
   const angle = segment.endAngle - segment.startAngle;
-  if (angle >= 360) {
-    return [
-      `M ${SVG_CENTER} 0`,
-      `A ${SVG_RADIUS} ${SVG_RADIUS} 0 1 1 ${SVG_CENTER} 100`,
-      `A ${SVG_RADIUS} ${SVG_RADIUS} 0 1 1 ${SVG_CENTER} 0`,
-      "Z",
-    ].join(" ");
-  }
+  if (angle >= 360) return "circle(50% at 50% 50%)";
 
-  const start = pointOnWheel(segment.startAngle);
-  const end = pointOnWheel(segment.endAngle);
-  const largeArcFlag = angle > 180 ? 1 : 0;
-  return [
-    `M ${SVG_CENTER} ${SVG_CENTER}`,
-    `L ${start.x} ${start.y}`,
-    `A ${SVG_RADIUS} ${SVG_RADIUS} 0 ${largeArcFlag} 1 ${end.x} ${end.y}`,
-    "Z",
-  ].join(" ");
+  const stepCount = Math.ceil(angle / SEGMENT_HIT_AREA_MAXIMUM_STEP_DEGREES);
+  const points = Array.from({ length: stepCount + 1 }, (_, index) => {
+    const pointAngle = segment.startAngle + (angle * index) / stepCount;
+    const radians = degreesToRadians(pointAngle);
+    const x = WHEEL_CENTER_PERCENT + WHEEL_RADIUS_PERCENT * Math.sin(radians);
+    const y = WHEEL_CENTER_PERCENT - WHEEL_RADIUS_PERCENT * Math.cos(radians);
+    return `${formatPercentage(x)} ${formatPercentage(y)}`;
+  });
+
+  return `polygon(50% 50%, ${points.join(", ")})`;
 }
 
-function pointOnWheel(angle: number): { x: number; y: number } {
-  const radians = degreesToRadians(angle);
-  return {
-    x: SVG_CENTER + SVG_RADIUS * Math.sin(radians),
-    y: SVG_CENTER - SVG_RADIUS * Math.cos(radians),
-  };
+function formatPercentage(value: number): string {
+  return `${Number(value.toFixed(4))}%`;
 }
 
 function createLabelStyle(
