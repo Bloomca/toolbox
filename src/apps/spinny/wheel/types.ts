@@ -15,6 +15,8 @@ export type WheelProps = {
   choices: readonly WheelChoice[];
   palette?: readonly WheelPaletteEntry[];
   selectedChoiceId$?: State<string | null>;
+  selectableChoiceIds?: ReadonlySet<string>;
+  onChoiceSelect?: (choiceId: string) => void;
 };
 
 export type WheelSegment = {

@@ -28,6 +28,7 @@ export function SpinnyApp() {
   const listsLoaded$ = createState(false);
   const isSaving$ = createState(false);
   const choices$ = createState<EditableChoice[]>(createDefaultChoices());
+  const selectedCategoryPath$ = createState<string[]>([]);
   const isSpinning$ = createState(false);
   const saveDisabled$ = listTitle$
     .combine(isSpinning$, isSaving$, listsLoaded$)
@@ -61,6 +62,7 @@ export function SpinnyApp() {
     selectedListId$.set(null);
     listTitle$.set("New List");
     choices$.set(createDefaultChoices());
+    selectedCategoryPath$.set([]);
     clearResult();
   }
 
@@ -149,12 +151,19 @@ export function SpinnyApp() {
     selectedListId$.set(list.id);
     listTitle$.set(list.title);
     choices$.set(list.choices.map((choice) => ({ ...choice })));
+    selectedCategoryPath$.set([]);
     clearResult();
   }
 
   return (
     <div class={styles.app}>
-      <SpinnerPanel choices$={choices$} isSpinning$={isSpinning$} result$={result$} />
+      <SpinnerPanel
+        listTitle$={listTitle$}
+        choices$={choices$}
+        selectedCategoryPath$={selectedCategoryPath$}
+        isSpinning$={isSpinning$}
+        result$={result$}
+      />
 
       <ChoiceEditor
         title$={listTitle$}

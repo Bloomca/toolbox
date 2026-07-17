@@ -24,6 +24,71 @@
   gap: 16px;
 }
 
+.wheelBreadcrumbs {
+  width: min(100%, 480px);
+  min-height: 28px;
+  flex: 0 0 auto;
+  color: #2f211d;
+  font-size: 0.9rem;
+  z-index: 2;
+}
+
+.wheelBreadcrumbs ol {
+  display: flex;
+  overflow: hidden;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin: 0;
+  padding: 0 8px;
+  list-style: none;
+}
+
+.wheelBreadcrumbs li {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 7px;
+}
+
+.wheelBreadcrumbs button {
+  overflow: hidden;
+  max-width: 140px;
+  padding: 3px 5px;
+  border: 0;
+  border-radius: 4px;
+  color: #274c77;
+  background: transparent;
+  font: inherit;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.wheelBreadcrumbs button:hover,
+.wheelBreadcrumbs button:focus-visible {
+  background: #bfdbfe;
+  outline: none;
+}
+
+.wheelBreadcrumbs button:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+.wheelBreadcrumbs [aria-current="page"] {
+  overflow: hidden;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wheelBreadcrumbSeparator {
+  color: rgb(47 33 29 / 0.58);
+  font-weight: 700;
+}
+
 .wheelStage {
   position: relative;
   width: min(100%, 480px);
@@ -63,6 +128,7 @@
   border: 1px solid #5f4634;
   border-radius: 50%;
   background: #f0cfa7;
+  pointer-events: none;
   transform: translate(-50%, -50%);
 }
 
@@ -96,6 +162,39 @@
     filter 180ms ease-out;
 }
 
+.wheelInteraction {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  pointer-events: none;
+}
+
+.wheelCategorySegment {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  appearance: none;
+  background: transparent;
+  pointer-events: auto;
+  cursor: pointer;
+  transition: background-color 100ms ease-out;
+}
+
+.wheelCategorySegment:hover,
+.wheelCategorySegment:focus-visible {
+  background: rgb(255 255 255 / 0.2);
+  outline: none;
+}
+
+.wheelStage[aria-busy="true"] .wheelCategorySegment {
+  pointer-events: none;
+  cursor: default;
+}
+
 .wheelLabel {
   position: absolute;
   z-index: 3;
@@ -108,6 +207,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   opacity: 1;
+  pointer-events: none;
   user-select: none;
 }
 
@@ -157,9 +257,14 @@
 }
 
 .controls {
+  max-width: 100%;
   flex: 0 0 auto;
   position: relative;
   z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
 }
 
 .controls button {
@@ -170,6 +275,14 @@
 .controls button:disabled {
   cursor: wait;
   opacity: 0.65;
+}
+
+.controls .spinWithinButton {
+  min-width: 0;
+  max-width: 270px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .result {

@@ -131,6 +131,33 @@ describe("Spinny", () => {
       "120deg",
     );
   });
+
+  test("makes selectable subcategory segments clickable and keyboard accessible", () => {
+    const onChoiceSelect = vi.fn();
+    const choices: WheelChoice[] = [
+      { id: "category", label: "Category", weight: 1 },
+      { id: "other", label: "Other", weight: 1 },
+    ];
+    const container = mount(
+      <Wheel
+        choices={choices}
+        selectableChoiceIds={new Set(["category"])}
+        onChoiceSelect={onChoiceSelect}
+      />,
+    );
+    const categorySegment = container.querySelector<HTMLButtonElement>(
+      '[data-wheel-category="category"]',
+    );
+
+    expect(categorySegment?.style.clipPath).toContain("polygon");
+    expect(categorySegment?.type).toBe("button");
+    expect(container.querySelector('[data-choice-id="category"]')?.textContent).toContain("›");
+    expect(container.querySelector('[data-wheel-category="other"]')).toBeNull();
+
+    categorySegment?.click();
+    expect(onChoiceSelect).toHaveBeenCalledOnce();
+    expect(onChoiceSelect).toHaveBeenCalledWith("category");
+  });
 });
 
 describe("wheel palette", () => {
