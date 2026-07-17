@@ -41,6 +41,16 @@
   line-height: 1;
 }
 
+[data-toolbox-button-tone="modified"] {
+  border-color: #274c77;
+  color: #274c77;
+  background: #bfdbfe;
+}
+
+[data-toolbox-button-tone="modified"]:hover:not(:disabled) {
+  background: #93c5fd;
+}
+
 [data-toolbox-button-tone="danger"] {
   border-color: #762020;
   color: #762020;

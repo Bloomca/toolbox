@@ -1,9 +1,13 @@
+import type { State } from "veles";
 import type { JSX } from "veles/jsx-runtime";
 
 import "./button.css";
 
+type ButtonTone = "default" | "danger" | "modified";
+type ButtonToneAttribute = ReturnType<State<ButtonTone>["attribute"]>;
+
 type NativeButtonProps = JSX.HTMLAttributes<HTMLButtonElement> & {
-  tone?: "default" | "danger";
+  tone?: ButtonTone | ButtonToneAttribute;
   [dataAttribute: `data-${string}`]: unknown;
 };
 
