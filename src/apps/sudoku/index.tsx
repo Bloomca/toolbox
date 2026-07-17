@@ -23,7 +23,7 @@ export function SudokuApp() {
   }
 
   return (
-    <div>
+    <div class={styles.app}>
       {state$.renderSelected(
         (state) => state.board,
         (board) =>

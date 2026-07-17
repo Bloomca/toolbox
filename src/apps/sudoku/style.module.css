@@ -1,3 +1,9 @@
+:global(.standalone) .app {
+  width: min(calc(100vh - 34px - 28px), calc(100% - 24px));
+  margin-right: auto;
+  margin-left: auto;
+}
+
 .board {
   display: grid;
   grid-template-columns: repeat(9, 1fr);

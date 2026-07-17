@@ -5,15 +5,17 @@ export type WindowSize = {
 
 export type AppDefinition = {
   name: string;
+  standalonePath?: `/${string}`;
   preferredWindowSize?: WindowSize;
 };
 
 export const APP_MANIFEST = {
   settings: { name: "Settings" },
-  sudoku: { name: "Sudoku" },
-  "markdown-reader": { name: "Markdown" },
+  sudoku: { name: "Sudoku", standalonePath: "/sudoku" },
+  "markdown-reader": { name: "Markdown", standalonePath: "/markdown" },
   spinny: {
     name: "Spinny",
+    standalonePath: "/spinny",
     preferredWindowSize: { width: 880, height: 660 },
   },
 } satisfies Record<string, AppDefinition>;
