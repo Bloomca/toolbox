@@ -257,9 +257,14 @@
 }
 
 .controls {
+  max-width: 100%;
   flex: 0 0 auto;
   position: relative;
   z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
 }
 
 .controls button {
@@ -270,6 +275,14 @@
 .controls button:disabled {
   cursor: wait;
   opacity: 0.65;
+}
+
+.controls .spinWithinButton {
+  min-width: 0;
+  max-width: 270px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .result {

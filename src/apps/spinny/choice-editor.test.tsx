@@ -28,6 +28,7 @@ afterEach(() => {
   unmount = undefined;
   document.body.replaceChildren();
   localStorage.clear();
+  vi.restoreAllMocks();
 });
 
 describe("Spinny choice editor", () => {
@@ -418,6 +419,62 @@ describe("Spinny choice editor", () => {
 
     expect(breadcrumbs?.querySelector('[aria-current="page"]')?.textContent).toBe("New List");
     expect(container.querySelectorAll("[data-choice-id]")).toHaveLength(9);
+  });
+
+  test("offers to spin within a winning subcategory", async () => {
+    vi.spyOn(window, "matchMedia").mockReturnValue({ matches: true } as MediaQueryList);
+    vi.spyOn(crypto, "getRandomValues").mockImplementation((array) => {
+      if (array instanceof Uint32Array) array[0] = 0;
+      return array;
+    });
+    const container = renderApp();
+
+    container.querySelector<HTMLButtonElement>('[aria-label="Options for Sun"]')?.click();
+    const addSubChoiceButton = container.querySelector<HTMLButtonElement>(
+      '[aria-label="Add sub-choice to Sun"]',
+    );
+    addSubChoiceButton?.click();
+    setInputValue(
+      container.querySelectorAll<HTMLInputElement>('[aria-label="Choice name"]')[1],
+      "Sunrise",
+    );
+    addSubChoiceButton?.click();
+    setInputValue(
+      container.querySelectorAll<HTMLInputElement>('[aria-label="Choice name"]')[2],
+      "Sunset",
+    );
+
+    findButton(container, "Spin").click();
+    await vi.waitFor(() =>
+      expect(container.querySelector('[role="status"]')?.textContent).toBe("Winner: Sun"),
+    );
+
+    const spinWithinButton = findButton(container, "Spin within Sun");
+    const spinButton = findButton(container, "Spin");
+    expect(spinWithinButton.parentElement).toBe(spinButton.parentElement);
+    expect(
+      Array.from(spinButton.parentElement?.querySelectorAll("button") ?? [], (button) =>
+        button.textContent?.trim(),
+      ),
+    ).toEqual(["Spin within Sun", "Spin"]);
+
+    spinWithinButton.click();
+
+    await vi.waitFor(() =>
+      expect(container.querySelector('[role="status"]')?.textContent).toBe("Winner: Sunrise"),
+    );
+    expect(
+      container.querySelector('[aria-label="Wheel location"]')?.textContent?.replace(/\s/g, ""),
+    ).toBe("NewList>Sun");
+    expect(
+      Array.from(
+        container.querySelectorAll<HTMLElement>("[data-choice-id]"),
+        (choice) => choice.title,
+      ),
+    ).toEqual(["Sunrise", "Sunset"]);
+    expect(
+      Array.from(container.querySelectorAll("button"), (button) => button.textContent?.trim()),
+    ).not.toContain("Spin within Sunrise");
   });
 
   test("deleting a parent also deletes its nested choices", () => {

@@ -43,6 +43,11 @@ export function SpinnerPanel({
   const spinDisabled$ = isSpinning$.combine(canSpin$);
   const selectedChoiceId$ = result$.map((result) => result?.id ?? null);
   const resultMessage$ = result$.combine(canSpin$);
+  const spinWithinChoice$ = result$
+    .combine(choices$)
+    .map(([result, choices]) =>
+      result && getActiveChoices(choices, result.id).length >= MINIMUM_SPIN_CHOICES ? result : null,
+    );
   const breadcrumbs$ = listTitle$
     .combine(selectedCategoryPath$, choices$)
     .map(([listTitle, categoryPath, choices]) =>
@@ -84,8 +89,8 @@ export function SpinnerPanel({
     pointerAnimation?.cancel();
   });
 
-  function selectCategory(choiceId: string) {
-    if (isSpinning$.get()) return;
+  function selectCategory(choiceId: string): boolean {
+    if (isSpinning$.get()) return false;
 
     const choices = choices$.get();
     const categoryPath = selectedCategoryPath$.get();
@@ -95,10 +100,17 @@ export function SpinnerPanel({
       !currentChoices.some((choice) => choice.id === choiceId) ||
       categoryChoices.length < MINIMUM_SPIN_CHOICES
     ) {
-      return;
+      return false;
     }
 
     selectedCategoryPath$.set([...categoryPath, choiceId]);
+    return true;
+  }
+
+  async function spinWithinCategory(choiceId: string) {
+    if (!selectCategory(choiceId)) return;
+    await Promise.resolve();
+    if (mounted) await spin();
   }
 
   function selectBreadcrumb(index: number) {
@@ -196,6 +208,16 @@ export function SpinnerPanel({
       </div>
 
       <div class={styles.controls}>
+        {spinWithinChoice$.render((choice) =>
+          choice ? (
+            <Button
+              class={styles.spinWithinButton}
+              onClick={() => void spinWithinCategory(choice.id)}
+            >
+              Spin within {choice.label}
+            </Button>
+          ) : null,
+        )}
         <Button
           disabled={spinDisabled$.attribute(([isSpinning, canSpin]) => isSpinning || !canSpin)}
           onClick={spin}
