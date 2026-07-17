@@ -270,17 +270,36 @@
 }
 
 .choiceRow {
+  position: relative;
   display: grid;
   grid-template-columns: 32px minmax(0, 1fr) 32px 32px;
   align-items: center;
   gap: 10px;
   min-width: 0;
+  box-sizing: border-box;
+}
+
+.choiceRow[data-parent-choice-id] {
+  padding-left: 24px;
+}
+
+.choiceRow[data-parent-choice-id]::before {
+  content: "↳";
+  position: absolute;
+  left: 4px;
+  top: 7px;
+  color: rgb(47 33 29 / 0.58);
+  font-weight: 700;
 }
 
 .choiceOptions {
   grid-column: 2 / -1;
   min-width: 0;
-  padding: 2px 4px 6px 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 32px;
+  align-items: center;
+  gap: 10px;
+  padding: 2px 0 6px 0;
 }
 
 .choiceActions {

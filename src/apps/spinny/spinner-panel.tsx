@@ -120,6 +120,9 @@ export function SpinnerPanel({ choices$, isSpinning$, result$ }: SpinnerPanelPro
 
 function getActiveChoices(choices: readonly EditableChoice[]): WheelChoice[] {
   return choices
-    .filter((choice) => choice.included && isChoiceValid(choice))
-    .map(({ included: _included, ...choice }) => ({ ...choice, label: choice.label.trim() }));
+    .filter((choice) => choice.parentChoiceId === null && choice.included && isChoiceValid(choice))
+    .map(({ included: _included, parentChoiceId: _parentChoiceId, ...choice }) => ({
+      ...choice,
+      label: choice.label.trim(),
+    }));
 }

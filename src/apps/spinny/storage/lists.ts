@@ -8,7 +8,13 @@ let writeQueue = Promise.resolve();
 export async function readSpinnyLists(): Promise<SavedSpinnyList[]> {
   const storedValue = await storage.read(LISTS_STORAGE_KEY);
   if (!Array.isArray(storedValue)) return [];
-  return storedValue.filter(isSavedSpinnyList);
+  return storedValue.filter(isSavedSpinnyList).map((list) => ({
+    ...list,
+    choices: list.choices.map((choice) => ({
+      ...choice,
+      parentChoiceId: choice.parentChoiceId ?? null,
+    })),
+  }));
 }
 
 export function saveSpinnyList({
@@ -114,7 +120,10 @@ function isEditableChoice(value: unknown): value is EditableChoice {
     typeof choice.weight === "number" &&
     Number.isFinite(choice.weight) &&
     choice.weight > 0 &&
-    typeof choice.included === "boolean"
+    typeof choice.included === "boolean" &&
+    (choice.parentChoiceId === undefined ||
+      choice.parentChoiceId === null ||
+      typeof choice.parentChoiceId === "string")
   );
 }
 

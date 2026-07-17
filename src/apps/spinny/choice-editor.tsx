@@ -51,12 +51,16 @@ export function ChoiceEditor({
   onSelectList,
   onUpdate,
 }: ChoiceEditorProps) {
-  const canAdd$ = choices$.map((choices) => choices.length < MAX_CHOICES);
+  const canAddTopLevelChoice$ = choices$.map(
+    (choices) => countChoicesForParent(choices, null) < MAX_CHOICES,
+  );
   const savedListOptions$ = savedLists$.combine(listsLoaded$, disabled$, selectedListId$);
   const newListDisabled$ = selectedListId$
     .combine(disabled$)
     .map(([selectedListId, editorDisabled]) => !selectedListId || editorDisabled);
-  const addDisabled$ = disabled$.combine(canAdd$);
+  const addTopLevelChoiceDisabled$ = disabled$
+    .combine(canAddTopLevelChoice$)
+    .map(([editorDisabled, canAdd]) => editorDisabled || !canAdd);
   let nextChoiceId = 1;
   let choiceIdToFocus: string | null = null;
 
@@ -67,23 +71,41 @@ export function ChoiceEditor({
     onEdit();
   }
 
-  function addChoice() {
-    if (disabled$.get() || choices$.get().length >= MAX_CHOICES) return;
-
+  function addChoice(parentChoiceId: string | null) {
     const choices = choices$.get();
+    if (disabled$.get() || countChoicesForParent(choices, parentChoiceId) >= MAX_CHOICES) {
+      return;
+    }
+
     let id: string;
     do {
       id = `custom-${nextChoiceId++}`;
     } while (choices.some((choice) => choice.id === id));
 
+    const choice: EditableChoice = {
+      id,
+      label: "",
+      weight: DEFAULT_CHOICE_WEIGHT,
+      included: true,
+      parentChoiceId,
+    };
+    const insertionIndex = getChoiceInsertionIndex(choices, parentChoiceId);
+    const nextChoices = choices.slice();
+    nextChoices.splice(insertionIndex, 0, choice);
     choiceIdToFocus = id;
-    choices$.set(choices.concat({ id, label: "", weight: 1, included: true }));
+    choices$.set(nextChoices);
     onEdit();
   }
 
   function deleteChoice(id: string) {
     if (disabled$.get()) return;
-    choices$.update((choices) => choices.filter((choice) => choice.id !== id));
+
+    choices$.update((choices) => {
+      const choicesById = new Map(choices.map((choice) => [choice.id, choice]));
+      return choices.filter(
+        (choice) => choice.id !== id && !isDescendantOf(choice, id, choicesById),
+      );
+    });
     onEdit();
   }
 
@@ -145,6 +167,7 @@ export function ChoiceEditor({
         {choices$.renderEach({ key: "id" }, ({ elementState: choice$ }) => (
           <ChoiceRow
             choice$={choice$}
+            choices$={choices$}
             disabled$={disabled$}
             focusOnMount={choiceIdToFocus === choice$.get().id}
             onAddChoice={addChoice}
@@ -157,10 +180,7 @@ export function ChoiceEditor({
         ))}
       </ul>
       <div class={styles.choiceActions}>
-        <Button
-          disabled={addDisabled$.attribute(([editorDisabled, canAdd]) => editorDisabled || !canAdd)}
-          onClick={addChoice}
-        >
+        <Button disabled={addTopLevelChoiceDisabled$.attribute()} onClick={() => addChoice(null)}>
           Add option
         </Button>
       </div>
@@ -170,6 +190,7 @@ export function ChoiceEditor({
 
 function ChoiceRow({
   choice$,
+  choices$,
   disabled$,
   focusOnMount,
   onAddChoice,
@@ -178,9 +199,10 @@ function ChoiceRow({
   onFocusHandled,
 }: {
   choice$: State<EditableChoice>;
+  choices$: State<EditableChoice[]>;
   disabled$: State<boolean>;
   focusOnMount: boolean;
-  onAddChoice: () => void;
+  onAddChoice: (parentChoiceId: string | null) => void;
   onChange: (id: string, update: ChoiceUpdate) => void;
   onDelete: (id: string) => void;
   onFocusHandled: () => void;
@@ -191,6 +213,12 @@ function ChoiceRow({
   const isValid$ = choice$.map(isChoiceValid);
   const isChecked$ = choice$.map((choice) => choice.included && isChoiceValid(choice));
   const checkboxDisabled$ = disabled$.combine(isValid$);
+  const canAddNestedChoice$ = choices$.map(
+    (choices) => countChoicesForParent(choices, choice$.get().id) < MAX_CHOICES,
+  );
+  const addNestedChoiceDisabled$ = disabled$
+    .combine(canAddNestedChoice$)
+    .map(([editorDisabled, canAdd]) => editorDisabled || !canAdd);
 
   choice$.trackSelected(
     (choice) => choice.weight,
@@ -207,7 +235,11 @@ function ChoiceRow({
   });
 
   return (
-    <li class={styles.choiceRow} data-invalid={isValid$.attribute((isValid) => !isValid)}>
+    <li
+      class={styles.choiceRow}
+      data-invalid={isValid$.attribute((isValid) => !isValid)}
+      data-parent-choice-id={choice$.attribute((choice) => choice.parentChoiceId ?? undefined)}
+    >
       <Tooltip content="Toggle this option" placement="top">
         <Checkbox
           aria-label={choice$.attribute((choice) => `Include ${choice.label || "blank choice"}`)}
@@ -235,7 +267,7 @@ function ChoiceRow({
             return;
           }
           event.preventDefault();
-          onAddChoice();
+          onAddChoice(choice$.get().parentChoiceId);
         }}
       />
       <Tooltip content="Options" placement="top">
@@ -283,11 +315,66 @@ function ChoiceRow({
                 })
               }
             />
+            <Tooltip content="Add sub-choice" placement="top">
+              <Button
+                variant="icon"
+                aria-label={choice$.attribute(
+                  (choice) => `Add sub-choice to ${choice.label || "blank choice"}`,
+                )}
+                disabled={addNestedChoiceDisabled$.attribute()}
+                onClick={() => onAddChoice(choice$.get().id)}
+              >
+                <span aria-hidden="true">+</span>
+              </Button>
+            </Tooltip>
           </div>
         ) : null,
       )}
     </li>
   );
+}
+
+function countChoicesForParent(
+  choices: readonly EditableChoice[],
+  parentChoiceId: string | null,
+): number {
+  return choices.filter((choice) => choice.parentChoiceId === parentChoiceId).length;
+}
+
+function getChoiceInsertionIndex(
+  choices: readonly EditableChoice[],
+  parentChoiceId: string | null,
+): number {
+  if (parentChoiceId === null) return choices.length;
+
+  const parentIndex = choices.findIndex((choice) => choice.id === parentChoiceId);
+  if (parentIndex === -1) return choices.length;
+
+  const choicesById = new Map(choices.map((choice) => [choice.id, choice]));
+  let insertionIndex = parentIndex + 1;
+  while (
+    insertionIndex < choices.length &&
+    isDescendantOf(choices[insertionIndex], parentChoiceId, choicesById)
+  ) {
+    insertionIndex += 1;
+  }
+  return insertionIndex;
+}
+
+function isDescendantOf(
+  choice: EditableChoice,
+  ancestorChoiceId: string,
+  choicesById: ReadonlyMap<string, EditableChoice>,
+): boolean {
+  const visitedChoiceIds = new Set<string>();
+  let parentChoiceId = choice.parentChoiceId;
+
+  while (parentChoiceId && !visitedChoiceIds.has(parentChoiceId)) {
+    if (parentChoiceId === ancestorChoiceId) return true;
+    visitedChoiceIds.add(parentChoiceId);
+    parentChoiceId = choicesById.get(parentChoiceId)?.parentChoiceId ?? null;
+  }
+  return false;
 }
 
 function sliderValueToChoiceWeight(value: number): number {

@@ -70,7 +70,7 @@ describe("Spinny choice editor", () => {
   test("shows and selects saved lists from the dropdown", async () => {
     const weekend = await saveSpinnyList({
       title: "Weekend",
-      choices: [{ id: "rest", label: "Rest", weight: 1, included: true }],
+      choices: [{ id: "rest", label: "Rest", weight: 1, included: true, parentChoiceId: null }],
     });
     await saveSpinnyList({ title: "Lunch", choices: [] });
     const container = renderApp();
@@ -107,7 +107,7 @@ describe("Spinny choice editor", () => {
   test("resets a selected list to a new unsaved list", async () => {
     const weekend = await saveSpinnyList({
       title: "Weekend",
-      choices: [{ id: "rest", label: "Rest", weight: 1, included: true }],
+      choices: [{ id: "rest", label: "Rest", weight: 1, included: true, parentChoiceId: null }],
     });
     const container = renderApp();
     const select = await vi.waitFor(() => {
@@ -163,7 +163,7 @@ describe("Spinny choice editor", () => {
   test("saves a selected list as a new list and selects it", async () => {
     const weekend = await saveSpinnyList({
       title: "Weekend",
-      choices: [{ id: "rest", label: "Rest", weight: 1, included: true }],
+      choices: [{ id: "rest", label: "Rest", weight: 1, included: true, parentChoiceId: null }],
     });
     const container = renderApp();
     const select = await vi.waitFor(() => {
@@ -194,7 +194,7 @@ describe("Spinny choice editor", () => {
   test("confirms deletion and resets to a new default list", async () => {
     const weekend = await saveSpinnyList({
       title: "Weekend",
-      choices: [{ id: "rest", label: "Rest", weight: 1, included: true }],
+      choices: [{ id: "rest", label: "Rest", weight: 1, included: true, parentChoiceId: null }],
     });
     const container = renderApp();
     const select = await vi.waitFor(() => {
@@ -240,7 +240,7 @@ describe("Spinny choice editor", () => {
     await saveSpinnyList({ title: "Weather", choices: [] });
     const forecast = await saveSpinnyList({
       title: "Forecast",
-      choices: [{ id: "sun", label: "Sun", weight: 1, included: true }],
+      choices: [{ id: "sun", label: "Sun", weight: 1, included: true, parentChoiceId: null }],
     });
     const container = renderApp();
     const select = await vi.waitFor(() => {
@@ -317,6 +317,54 @@ describe("Spinny choice editor", () => {
     expect(container.querySelector('[aria-label="Weight for Sun"]')).toBeNull();
   });
 
+  test("adds a nested choice beneath its parent", async () => {
+    const container = renderApp();
+    container.querySelector<HTMLButtonElement>('[aria-label="Options for Sun"]')?.click();
+
+    const addSubChoiceButton = container.querySelector<HTMLButtonElement>(
+      '[aria-label="Add sub-choice to Sun"]',
+    );
+    expect(addSubChoiceButton?.textContent).toContain("+");
+    addSubChoiceButton?.click();
+
+    const inputs = container.querySelectorAll<HTMLInputElement>('[aria-label="Choice name"]');
+    const nestedInput = inputs[1];
+    expect(inputs).toHaveLength(10);
+    expect(nestedInput.value).toBe("");
+    expect(nestedInput.closest("li")?.dataset.parentChoiceId).toBe("sun");
+    expect(document.activeElement).toBe(nestedInput);
+
+    setInputValue(nestedInput, "Sunrise");
+    expect(container.querySelectorAll("[data-wheel-segment]")).toHaveLength(9);
+
+    const saveButton = findButton(container, "Save");
+    await vi.waitFor(() => expect(saveButton.disabled).toBe(false));
+    saveButton.click();
+    await vi.waitFor(async () => expect(await readSpinnyLists()).toHaveLength(1));
+    expect((await readSpinnyLists())[0].choices[1]).toMatchObject({
+      label: "Sunrise",
+      parentChoiceId: "sun",
+    });
+  });
+
+  test("deleting a parent also deletes its nested choices", () => {
+    const container = renderApp();
+    container.querySelector<HTMLButtonElement>('[aria-label="Options for Sun"]')?.click();
+    container.querySelector<HTMLButtonElement>('[aria-label="Add sub-choice to Sun"]')?.click();
+    const nestedInput = container.querySelectorAll<HTMLInputElement>(
+      '[aria-label="Choice name"]',
+    )[1];
+    setInputValue(nestedInput, "Sunrise");
+
+    container.querySelector<HTMLButtonElement>('[aria-label="Delete Sun"]')?.click();
+
+    const remainingInputs = container.querySelectorAll<HTMLInputElement>(
+      '[aria-label="Choice name"]',
+    );
+    expect(remainingInputs).toHaveLength(8);
+    expect(Array.from(remainingInputs, (input) => input.value)).not.toContain("Sunrise");
+  });
+
   test("maps slider positions to choice weights", async () => {
     const container = renderApp();
     container.querySelector<HTMLButtonElement>('[aria-label="Options for Sun"]')?.click();
@@ -340,7 +388,7 @@ describe("Spinny choice editor", () => {
   test("expands options when a saved choice has a custom weight", async () => {
     const weightedList = await saveSpinnyList({
       title: "Weighted",
-      choices: [{ id: "sun", label: "Sun", weight: 1.5, included: true }],
+      choices: [{ id: "sun", label: "Sun", weight: 1.5, included: true, parentChoiceId: null }],
     });
     const container = renderApp();
     const select = await vi.waitFor(() => {
@@ -430,6 +478,25 @@ describe("Spinny choice editor", () => {
 
     expect(container.querySelectorAll('[aria-label="Choice name"]')).toHaveLength(12);
     expect(addButton.disabled).toBe(true);
+  });
+
+  test("limits top-level and nested choices independently", () => {
+    const container = renderApp();
+    const addTopLevelButton = findButton(container, "Add option");
+    addTopLevelButton.click();
+    addTopLevelButton.click();
+    addTopLevelButton.click();
+    expect(addTopLevelButton.disabled).toBe(true);
+
+    container.querySelector<HTMLButtonElement>('[aria-label="Options for Sun"]')?.click();
+    const addNestedButton = container.querySelector<HTMLButtonElement>(
+      '[aria-label="Add sub-choice to Sun"]',
+    );
+    expect(addNestedButton?.disabled).toBe(false);
+    for (let index = 0; index < 12; index += 1) addNestedButton?.click();
+
+    expect(container.querySelectorAll('[aria-label="Choice name"]')).toHaveLength(24);
+    expect(addNestedButton?.disabled).toBe(true);
   });
 
   test("automatically disables a blank choice", () => {

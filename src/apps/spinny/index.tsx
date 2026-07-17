@@ -9,15 +9,15 @@ import type { EditableChoice, SavedSpinnyList } from "./types";
 import type { WheelChoice } from "./wheel";
 
 const INITIAL_CHOICES: readonly EditableChoice[] = [
-  { id: "sun", label: "Sun", weight: 1, included: true },
-  { id: "water", label: "Water", weight: 1, included: true },
-  { id: "earth", label: "Earth", weight: 1, included: true },
-  { id: "wind", label: "Wind", weight: 1, included: true },
-  { id: "fire", label: "Fire", weight: 1, included: true },
-  { id: "sky", label: "Sky", weight: 1, included: true },
-  { id: "air", label: "Air", weight: 1, included: true },
-  { id: "ocean", label: "Ocean", weight: 1, included: true },
-  { id: "sand", label: "Sand", weight: 1, included: true },
+  { id: "sun", label: "Sun", weight: 1, included: true, parentChoiceId: null },
+  { id: "water", label: "Water", weight: 1, included: true, parentChoiceId: null },
+  { id: "earth", label: "Earth", weight: 1, included: true, parentChoiceId: null },
+  { id: "wind", label: "Wind", weight: 1, included: true, parentChoiceId: null },
+  { id: "fire", label: "Fire", weight: 1, included: true, parentChoiceId: null },
+  { id: "sky", label: "Sky", weight: 1, included: true, parentChoiceId: null },
+  { id: "air", label: "Air", weight: 1, included: true, parentChoiceId: null },
+  { id: "ocean", label: "Ocean", weight: 1, included: true, parentChoiceId: null },
+  { id: "sand", label: "Sand", weight: 1, included: true, parentChoiceId: null },
 ];
 
 export function SpinnyApp() {

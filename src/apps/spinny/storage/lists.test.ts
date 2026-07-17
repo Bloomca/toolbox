@@ -9,8 +9,8 @@ import { deleteSpinnyList, readSpinnyLists, saveSpinnyList, updateSpinnyList } f
 const storage = createAppStorage("spinny", localStorageBackend);
 
 const choices: EditableChoice[] = [
-  { id: "sun", label: "Sun", weight: 1, included: true },
-  { id: "rain", label: "Rain", weight: 1, included: false },
+  { id: "sun", label: "Sun", weight: 1, included: true, parentChoiceId: null },
+  { id: "rain", label: "Rain", weight: 1, included: false, parentChoiceId: null },
 ];
 
 afterEach(() => {
@@ -33,8 +33,8 @@ describe("Spinny list storage", () => {
       {
         ...savedList,
         choices: [
-          { id: "sun", label: "Sun", weight: 1, included: true },
-          { id: "rain", label: "Rain", weight: 1, included: false },
+          { id: "sun", label: "Sun", weight: 1, included: true, parentChoiceId: null },
+          { id: "rain", label: "Rain", weight: 1, included: false, parentChoiceId: null },
         ],
       },
     ]);
@@ -61,13 +61,13 @@ describe("Spinny list storage", () => {
     const updatedList = await updateSpinnyList({
       id: savedList.id,
       title: "  Forecast  ",
-      choices: [{ id: "cloud", label: "Cloud", weight: 2, included: true }],
+      choices: [{ id: "cloud", label: "Cloud", weight: 2, included: true, parentChoiceId: null }],
     });
 
     expect(updatedList).toEqual({
       id: savedList.id,
       title: "Forecast",
-      choices: [{ id: "cloud", label: "Cloud", weight: 2, included: true }],
+      choices: [{ id: "cloud", label: "Cloud", weight: 2, included: true, parentChoiceId: null }],
     });
     await expect(readSpinnyLists()).resolves.toEqual([updatedList]);
   });
@@ -89,6 +89,18 @@ describe("Spinny list storage", () => {
     ]);
 
     expect((await readSpinnyLists()).map((list) => list.title)).toEqual(["First", "Second"]);
+  });
+
+  test("treats choices saved before nesting support as top-level choices", async () => {
+    await storage.write("lists", [
+      {
+        id: "legacy",
+        title: "Legacy",
+        choices: [{ id: "sun", label: "Sun", weight: 1, included: true }],
+      },
+    ]);
+
+    expect((await readSpinnyLists())[0].choices[0].parentChoiceId).toBeNull();
   });
 
   test("ignores malformed saved lists", async () => {
