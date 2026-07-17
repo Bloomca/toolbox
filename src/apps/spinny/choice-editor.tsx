@@ -15,6 +15,7 @@ const MAXIMUM_WEIGHT_SLIDER_VALUE = 9;
 const MINIMUM_CHOICE_WEIGHT = 0.5;
 const DEFAULT_CHOICE_WEIGHT = 1;
 const CHOICE_WEIGHT_STEP = 0.125;
+const CHOICE_NESTING_INDENT_PIXELS = 24;
 
 let nextChoiceOptionsId = 1;
 
@@ -215,6 +216,12 @@ function ChoiceRow({
       !optionsExpanded && choice.weight !== DEFAULT_CHOICE_WEIGHT ? "modified" : "default",
     );
   const optionsId = `spinny-choice-options-${nextChoiceOptionsId++}`;
+  const choiceIndent$ = choice$
+    .combine(choices$)
+    .map(
+      ([choice, choices]) =>
+        `${getChoiceNestingLevel(choice, choices) * CHOICE_NESTING_INDENT_PIXELS}px`,
+    );
   const isValid$ = choice$.map(isChoiceValid);
   const isChecked$ = choice$.map((choice) => choice.included && isChoiceValid(choice));
   const checkboxDisabled$ = disabled$.combine(isValid$);
@@ -242,6 +249,7 @@ function ChoiceRow({
   return (
     <li
       class={styles.choiceRow}
+      style={choiceIndent$.attribute((choiceIndent) => ({ "--choice-indent": choiceIndent }))}
       data-invalid={isValid$.attribute((isValid) => !isValid)}
       data-parent-choice-id={choice$.attribute((choice) => choice.parentChoiceId ?? undefined)}
     >
@@ -345,6 +353,23 @@ function countChoicesForParent(
   parentChoiceId: string | null,
 ): number {
   return choices.filter((choice) => choice.parentChoiceId === parentChoiceId).length;
+}
+
+function getChoiceNestingLevel(choice: EditableChoice, choices: readonly EditableChoice[]): number {
+  const choicesById = new Map(choices.map((choice) => [choice.id, choice]));
+  const visitedChoiceIds = new Set<string>();
+  let nestingLevel = 0;
+  let parentChoiceId = choice.parentChoiceId;
+
+  while (parentChoiceId && !visitedChoiceIds.has(parentChoiceId)) {
+    visitedChoiceIds.add(parentChoiceId);
+    const parentChoice = choicesById.get(parentChoiceId);
+    if (!parentChoice) break;
+    nestingLevel += 1;
+    parentChoiceId = parentChoice.parentChoiceId;
+  }
+
+  return nestingLevel;
 }
 
 function getChoiceInsertionIndex(

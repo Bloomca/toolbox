@@ -280,13 +280,13 @@
 }
 
 .choiceRow[data-parent-choice-id] {
-  padding-left: 24px;
+  padding-left: var(--choice-indent);
 }
 
 .choiceRow[data-parent-choice-id]::before {
   content: "↳";
   position: absolute;
-  left: 4px;
+  left: calc(var(--choice-indent) - 20px);
   top: 7px;
   color: rgb(47 33 29 / 0.58);
   font-weight: 700;
