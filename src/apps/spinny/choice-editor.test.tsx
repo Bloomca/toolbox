@@ -301,6 +301,7 @@ describe("Spinny choice editor", () => {
 
     expect(optionsButton?.textContent).toContain("…");
     expect(optionsButton?.getAttribute("aria-expanded")).toBe("false");
+    expect(optionsButton?.dataset.toolboxButtonTone).toBe("default");
     expect(container.querySelector('[aria-label="Weight for Sun"]')).toBeNull();
     optionsButton?.click();
 
@@ -312,8 +313,12 @@ describe("Spinny choice editor", () => {
     expect(slider?.value).toBe("5");
     expect(slider?.parentElement?.id).toBe(optionsButton?.getAttribute("aria-controls"));
 
+    setInputValue(slider, "1");
+    expect(optionsButton?.dataset.toolboxButtonTone).toBe("default");
     optionsButton?.click();
+
     expect(optionsButton?.getAttribute("aria-expanded")).toBe("false");
+    expect(optionsButton?.dataset.toolboxButtonTone).toBe("modified");
     expect(container.querySelector('[aria-label="Weight for Sun"]')).toBeNull();
   });
 

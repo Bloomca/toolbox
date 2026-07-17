@@ -209,6 +209,11 @@ function ChoiceRow({
 }) {
   const inputRef = createRef<HTMLInputElement>();
   const optionsExpanded$ = createState(choice$.get().weight !== DEFAULT_CHOICE_WEIGHT);
+  const optionsButtonTone$ = choice$
+    .combine(optionsExpanded$)
+    .map(([choice, optionsExpanded]) =>
+      !optionsExpanded && choice.weight !== DEFAULT_CHOICE_WEIGHT ? "modified" : "default",
+    );
   const optionsId = `spinny-choice-options-${nextChoiceOptionsId++}`;
   const isValid$ = choice$.map(isChoiceValid);
   const isChecked$ = choice$.map((choice) => choice.included && isChoiceValid(choice));
@@ -273,6 +278,7 @@ function ChoiceRow({
       <Tooltip content="Options" placement="top">
         <Button
           variant="icon"
+          tone={optionsButtonTone$.attribute()}
           aria-label={choice$.attribute(
             (choice) => `Options for ${choice.label || "blank choice"}`,
           )}
