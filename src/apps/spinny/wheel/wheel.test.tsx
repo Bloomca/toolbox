@@ -61,8 +61,8 @@ describe("Spinny", () => {
       </ConfirmationProvider>,
     );
 
-    expect(container.querySelector("[data-wheel-segment][data-selected]")).toBeNull();
-    expect(container.querySelector("[data-choice-id][data-dimmed]")).toBeNull();
+    expect(container.querySelector('[data-wheel-segment][data-selected="true"]')).toBeNull();
+    expect(container.querySelector('[data-choice-id][data-dimmed="true"]')).toBeNull();
     container.querySelector<HTMLButtonElement>("button")?.click();
 
     await vi.waitFor(() => {
@@ -73,13 +73,13 @@ describe("Spinny", () => {
       container.querySelectorAll<HTMLElement>("[data-choice-id]"),
     ).find((label) => label.title === winner);
     const selectedSegment = container.querySelector<HTMLElement>(
-      "[data-wheel-segment][data-selected]",
+      '[data-wheel-segment][data-selected="true"]',
     );
 
-    const dimmedLabels = container.querySelectorAll("[data-choice-id][data-dimmed]");
+    const dimmedLabels = container.querySelectorAll('[data-choice-id][data-dimmed="true"]');
 
     expect(selectedSegment?.dataset.wheelSegment).toBe(winnerLabel?.dataset.choiceId);
-    expect(winnerLabel?.hasAttribute("data-dimmed")).toBe(false);
+    expect(winnerLabel?.dataset.dimmed).toBe("false");
     expect(dimmedLabels).toHaveLength(8);
     expect(container.querySelector<HTMLElement>('[role="list"]')?.style.background).toContain("d9");
     await vi.waitFor(async () => {
