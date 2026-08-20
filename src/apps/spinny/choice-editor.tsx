@@ -29,11 +29,14 @@ type ChoiceEditorProps = {
   listsLoaded$: State<boolean>;
   disabled$: State<boolean>;
   saveDisabled$: State<boolean>;
+  shared$: State<boolean>;
   onCreateNewList: () => void;
   onDeleteList: () => void;
   onEdit: () => void;
+  onImportList: () => void;
   onSave: () => void;
   onSelectList: (id: string) => void;
+  onShare: () => void;
   onUpdate: () => void;
 };
 
@@ -45,13 +48,25 @@ export function ChoiceEditor({
   listsLoaded$,
   disabled$,
   saveDisabled$,
+  shared$,
   onCreateNewList,
   onDeleteList,
   onEdit,
+  onImportList,
   onSave,
   onSelectList,
+  onShare,
   onUpdate,
 }: ChoiceEditorProps) {
+  const updateDisabled$ = disabled$
+    .combine(shared$)
+    .map(([editorDisabled, shared]) => editorDisabled || shared);
+  const shareDisabled$ = saveDisabled$
+    .combine(shared$, disabled$)
+    .map(([saveDisabled, shared, editorDisabled]) => (shared ? editorDisabled : saveDisabled));
+  const importDisabled$ = disabled$
+    .combine(listsLoaded$)
+    .map(([editorDisabled, listsLoaded]) => editorDisabled || !listsLoaded);
   const canAddTopLevelChoice$ = choices$.map(
     (choices) => countChoicesForParent(choices, null) < MAX_CHOICES,
   );
@@ -124,11 +139,17 @@ export function ChoiceEditor({
             onChange={(event) => onSelectList(event.target.value)}
             placeholder="New list (unsaved)"
             placeholderSelected={selectedListId === null}
-            options={savedLists.map((list) => ({ value: list.id, label: list.title }))}
+            options={savedLists.map((list) => ({
+              value: list.id,
+              label: list.shared ? `🌐 ${list.title}` : list.title,
+            }))}
           />
         ))}
         <Button disabled={newListDisabled$.attribute()} onClick={onCreateNewList}>
           New
+        </Button>
+        <Button disabled={importDisabled$.attribute()} onClick={onImportList}>
+          Import
         </Button>
       </div>
       <label class={styles.listTitleField}>
@@ -146,11 +167,19 @@ export function ChoiceEditor({
         {selectedListId$.render((selectedListId) =>
           selectedListId ? (
             <>
-              <Button disabled={disabled$.attribute()} onClick={onUpdate}>
-                Update
-              </Button>
+              <Tooltip
+                content="Cannot update shared lists. Save as new to edit"
+                hidden={shared$.attribute((shared) => !shared)}
+              >
+                <Button disabled={updateDisabled$.attribute()} onClick={onUpdate}>
+                  Update
+                </Button>
+              </Tooltip>
               <Button disabled={saveDisabled$.attribute()} onClick={onSave}>
                 Save as new
+              </Button>
+              <Button disabled={shareDisabled$.attribute()} onClick={onShare}>
+                Share
               </Button>
               <Button tone="danger" disabled={disabled$.attribute()} onClick={onDeleteList}>
                 Delete

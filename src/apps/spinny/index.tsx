@@ -2,11 +2,26 @@ import { createState, onMount, onUnmount } from "veles";
 
 import { useConfirmation } from "../../design/confirmation";
 import { ChoiceEditor } from "./choice-editor";
+import { ImportListModal } from "./import-list-modal";
 import { SpinnerPanel } from "./spinner-panel";
-import { deleteSpinnyList, readSpinnyLists, saveSpinnyList, updateSpinnyList } from "./storage";
+import { getSharedSpinnyList, parseSharedSpinnyListId, shareSpinnyList } from "./share";
+import { SharedListModal } from "./shared-list-modal";
+import {
+  deleteSpinnyList,
+  markSpinnyListShared,
+  readSpinnyLists,
+  saveImportedSpinnyList,
+  saveSpinnyList,
+  updateSpinnyList,
+} from "./storage";
 import styles from "./style.module.css";
 import type { EditableChoice, SavedSpinnyList } from "./types";
 import type { WheelChoice } from "./wheel";
+
+type ImportModalOptions = {
+  initialValue: string;
+  autoImport: boolean;
+};
 
 const INITIAL_CHOICES: readonly EditableChoice[] = [
   { id: "sun", label: "Sun", weight: 1, included: true, parentChoiceId: null },
@@ -30,6 +45,15 @@ export function SpinnyApp() {
   const choices$ = createState<EditableChoice[]>(createDefaultChoices());
   const selectedCategoryPath$ = createState<string[]>([]);
   const isSpinning$ = createState(false);
+  const editorDisabled$ = isSpinning$
+    .combine(isSaving$)
+    .map(([isSpinning, isSaving]) => isSpinning || isSaving);
+  const selectedListShared$ = selectedListId$
+    .combine(savedLists$)
+    .map(
+      ([selectedListId, savedLists]) =>
+        savedLists.find((list) => list.id === selectedListId)?.shared === true,
+    );
   const saveDisabled$ = listTitle$
     .combine(isSpinning$, isSaving$, listsLoaded$)
     .map(
@@ -37,6 +61,8 @@ export function SpinnyApp() {
         !listsLoaded || isSpinning || isSaving || !title.trim(),
     );
   const result$ = createState<WheelChoice | null>(null);
+  const importModal$ = createState<ImportModalOptions | null>(null);
+  const sharedListLink$ = createState<string | null>(null);
   let mounted = true;
 
   onMount(() => {
@@ -46,7 +72,16 @@ export function SpinnyApp() {
       })
       .catch((error) => console.error("Could not load Spinny lists.", error))
       .finally(() => {
-        if (mounted) listsLoaded$.set(true);
+        if (!mounted) return;
+
+        listsLoaded$.set(true);
+        const sharedListId = parseSharedSpinnyListId(window.location.href);
+        if (sharedListId) {
+          importModal$.set({
+            initialValue: createSharedListLink(sharedListId),
+            autoImport: true,
+          });
+        }
       });
   });
 
@@ -93,6 +128,80 @@ export function SpinnyApp() {
     }
   }
 
+  async function importList(value: string) {
+    const id = parseSharedSpinnyListId(value);
+    if (!id) throw new Error("Enter a valid shared list link.");
+    if (!listsLoaded$.get() || isSaving$.get() || isSpinning$.get()) {
+      throw new Error("Lists are currently busy. Try again shortly.");
+    }
+
+    if (savedLists$.get().some((list) => list.id === id)) {
+      selectList(id);
+      removeSharedListIdFromURL();
+      return;
+    }
+
+    isSaving$.set(true);
+    try {
+      const importedList = await getSharedSpinnyList(id);
+      await saveImportedSpinnyList(importedList);
+      const lists = await readSpinnyLists();
+      if (mounted) {
+        savedLists$.set(lists);
+        selectedListId$.set(importedList.id);
+        listTitle$.set(importedList.title);
+        choices$.set(importedList.choices.map((choice) => ({ ...choice })));
+        selectedCategoryPath$.set([]);
+        clearResult();
+        removeSharedListIdFromURL();
+      }
+    } finally {
+      if (mounted) isSaving$.set(false);
+    }
+  }
+
+  async function shareList() {
+    const id = selectedListId$.get();
+    const title = listTitle$.get().trim();
+    const selectedList = savedLists$.get().find((list) => list.id === id);
+    if (!id || !selectedList || !listsLoaded$.get() || isSaving$.get() || isSpinning$.get()) {
+      return;
+    }
+
+    if (selectedList.shared) {
+      sharedListLink$.set(createSharedListLink(id));
+      return;
+    }
+    if (!title) return;
+
+    const list: SavedSpinnyList = {
+      id,
+      title,
+      choices: choices$.get().map((choice) => ({ ...choice })),
+    };
+
+    isSaving$.set(true);
+    try {
+      const sharedId = await shareSpinnyList(list);
+      await markSpinnyListShared({
+        id,
+        sharedId,
+        title: list.title,
+        choices: list.choices,
+      });
+      const lists = await readSpinnyLists();
+      if (mounted) {
+        savedLists$.set(lists);
+        selectedListId$.set(sharedId);
+        sharedListLink$.set(createSharedListLink(sharedId));
+      }
+    } catch (error) {
+      console.error("Could not share Spinny list.", error);
+    } finally {
+      if (mounted) isSaving$.set(false);
+    }
+  }
+
   async function deleteList() {
     const id = selectedListId$.get();
     if (!id || isSaving$.get() || isSpinning$.get()) return;
@@ -123,7 +232,8 @@ export function SpinnyApp() {
 
   async function updateList() {
     const id = selectedListId$.get();
-    if (!id || isSaving$.get() || isSpinning$.get()) return;
+    const selectedList = savedLists$.get().find((list) => list.id === id);
+    if (!id || selectedList?.shared || isSaving$.get() || isSpinning$.get()) return;
 
     isSaving$.set(true);
     try {
@@ -143,7 +253,7 @@ export function SpinnyApp() {
   }
 
   function selectList(id: string) {
-    if (isSpinning$.get()) return;
+    if (isSpinning$.get() || isSaving$.get()) return;
 
     const list = savedLists$.get().find((list) => list.id === id);
     if (!list) return;
@@ -171,17 +281,46 @@ export function SpinnyApp() {
         savedLists$={savedLists$}
         selectedListId$={selectedListId$}
         listsLoaded$={listsLoaded$}
-        disabled$={isSpinning$}
+        disabled$={editorDisabled$}
         saveDisabled$={saveDisabled$}
+        shared$={selectedListShared$}
         onCreateNewList={createNewList}
         onDeleteList={deleteList}
         onEdit={clearResult}
+        onImportList={() => importModal$.set({ initialValue: "", autoImport: false })}
         onSave={saveList}
         onSelectList={selectList}
+        onShare={shareList}
         onUpdate={updateList}
       />
+
+      {importModal$.render((options) =>
+        options ? (
+          <ImportListModal
+            {...options}
+            onImport={importList}
+            onClose={() => importModal$.set(null)}
+          />
+        ) : null,
+      )}
+
+      {sharedListLink$.render((link) =>
+        link ? <SharedListModal link={link} onClose={() => sharedListLink$.set(null)} /> : null,
+      )}
     </div>
   );
+}
+
+function removeSharedListIdFromURL() {
+  const url = new URL(window.location.href);
+  url.searchParams.delete("share_list_id");
+  window.history.replaceState(window.history.state, "", url.toString());
+}
+
+function createSharedListLink(id: string): string {
+  const url = new URL("/", window.location.origin);
+  url.searchParams.set("share_list_id", id);
+  return url.toString();
 }
 
 function createDefaultChoices(): EditableChoice[] {

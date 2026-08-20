@@ -28,6 +28,7 @@ afterEach(() => {
   unmount = undefined;
   document.body.replaceChildren();
   localStorage.clear();
+  window.history.replaceState({}, "", "/");
   vi.restoreAllMocks();
 });
 
@@ -140,6 +141,155 @@ describe("Spinny choice editor", () => {
     expect((await readSpinnyLists())[0].choices[0].label).toBe("Rest");
   });
 
+  test("imports and selects a valid shared list", async () => {
+    const localList = await saveSpinnyList({ title: "Local", choices: [] });
+    const sharedId = "Ea_kS6FFmaMCcMNpnapQpw";
+    const importedChoice = {
+      id: "sun",
+      label: "Sun",
+      weight: 1,
+      included: true,
+      parentChoiceId: null,
+    };
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          id: sharedId,
+          data: JSON.stringify({
+            id: "client-generated-id",
+            title: "Imported list",
+            choices: [importedChoice],
+          }),
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } },
+      ),
+    );
+    const container = renderApp();
+    const importButton = findButton(container, "Import");
+    await vi.waitFor(() => expect(importButton.disabled).toBe(false));
+    importButton.click();
+
+    const dialog = container.querySelector<HTMLElement>('[role="dialog"]');
+    const linkInput = dialog?.querySelector<HTMLInputElement>('[aria-label="Shared list link"]');
+    expect(dialog?.querySelector("h2")?.textContent).toBe("Import list");
+    expect(findButton(dialog ?? container, "Import").disabled).toBe(true);
+    expect(findButton(dialog ?? container, "Cancel").disabled).toBe(false);
+
+    setInputValue(linkInput, "not a shared link");
+    findButton(dialog ?? container, "Import").click();
+    await vi.waitFor(() =>
+      expect(dialog?.querySelector('[role="alert"]')?.textContent).toBe(
+        "Enter a valid shared list link.",
+      ),
+    );
+    expect(fetchMock).not.toHaveBeenCalled();
+
+    const link = new URL("https://toolbox.bloomca.me/");
+    link.searchParams.set("share_list_id", sharedId);
+    setInputValue(linkInput, link.toString());
+    findButton(dialog ?? container, "Import").click();
+
+    await vi.waitFor(async () =>
+      expect(await readSpinnyLists()).toEqual([
+        localList,
+        {
+          id: sharedId,
+          title: "Imported list",
+          choices: [importedChoice],
+          shared: true,
+        },
+      ]),
+    );
+    expect(fetchMock).toHaveBeenCalledOnce();
+    expect(fetchMock).toHaveBeenCalledWith(`/api/spinny/share/${sharedId}`);
+    expect(container.querySelector('[role="dialog"]')).toBeNull();
+    expect(container.querySelector<HTMLSelectElement>('[aria-label="Saved lists"]')?.value).toBe(
+      sharedId,
+    );
+    expect(
+      Array.from(
+        container.querySelectorAll<HTMLOptionElement>('[aria-label="Saved lists"] option'),
+      ).find((option) => option.value === sharedId)?.textContent,
+    ).toBe("🌐 Imported list");
+    expect(container.querySelector<HTMLInputElement>('[aria-label="List title"]')?.value).toBe(
+      "Imported list",
+    );
+    expect(container.querySelector<HTMLInputElement>('[aria-label="Choice name"]')?.value).toBe(
+      "Sun",
+    );
+    expect(findButton(container, "Update").disabled).toBe(true);
+
+    const savedListsDropdown = container.querySelector<HTMLSelectElement>(
+      '[aria-label="Saved lists"]',
+    );
+    setSelectValue(savedListsDropdown, localList.id);
+    expect(savedListsDropdown?.value).toBe(localList.id);
+
+    findButton(container, "Import").click();
+    const secondDialog = container.querySelector<HTMLElement>('[role="dialog"]');
+    setInputValue(
+      secondDialog?.querySelector<HTMLInputElement>('[aria-label="Shared list link"]') ?? null,
+      link.toString(),
+    );
+    findButton(secondDialog ?? container, "Import").click();
+
+    await vi.waitFor(() =>
+      expect(container.querySelector<HTMLSelectElement>('[aria-label="Saved lists"]')?.value).toBe(
+        sharedId,
+      ),
+    );
+    expect(fetchMock).toHaveBeenCalledOnce();
+    expect(container.querySelector('[role="dialog"]')).toBeNull();
+  });
+
+  test("automatically imports a shared list from the page URL", async () => {
+    const sharedId = "P-dSPfBNzTcitZLJy2dLEw";
+    const importedList = {
+      id: "client-generated-id",
+      title: "Linked list",
+      choices: [{ id: "sun", label: "Sun", weight: 1, included: true, parentChoiceId: null }],
+    };
+    let resolveResponse!: (response: Response) => void;
+    const responsePromise = new Promise<Response>((resolve) => {
+      resolveResponse = resolve;
+    });
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockReturnValue(responsePromise);
+    window.history.replaceState({}, "", `/?keep=1&share_list_id=${sharedId}#spinny`);
+
+    const container = renderApp();
+    const expectedLink = new URL("/", window.location.origin);
+    expectedLink.searchParams.set("share_list_id", sharedId);
+
+    await vi.waitFor(() => {
+      const dialog = container.querySelector<HTMLElement>('[role="dialog"]');
+      expect(dialog?.querySelector("h2")?.textContent).toBe("Import list");
+      const linkInput = dialog?.querySelector<HTMLInputElement>('[aria-label="Shared list link"]');
+      expect(linkInput?.value).toBe(expectedLink.toString());
+      expect(linkInput?.disabled).toBe(true);
+      expect(fetchMock).toHaveBeenCalledWith(`/api/spinny/share/${sharedId}`);
+    });
+
+    resolveResponse(
+      new Response(JSON.stringify({ id: sharedId, data: JSON.stringify(importedList) }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+
+    await vi.waitFor(async () =>
+      expect(await readSpinnyLists()).toEqual([{ ...importedList, id: sharedId, shared: true }]),
+    );
+    expect(container.querySelector('[role="dialog"]')).toBeNull();
+    expect(container.querySelector<HTMLSelectElement>('[aria-label="Saved lists"]')?.value).toBe(
+      sharedId,
+    );
+    expect(container.querySelector<HTMLInputElement>('[aria-label="List title"]')?.value).toBe(
+      "Linked list",
+    );
+    expect(window.location.search).toBe("?keep=1");
+    expect(window.location.hash).toBe("#spinny");
+  });
+
   test("saves the current list", async () => {
     const container = renderApp();
     const saveButton = findButton(container, "Save");
@@ -190,6 +340,101 @@ describe("Spinny choice editor", () => {
     expect(container.querySelector<HTMLSelectElement>('[aria-label="Saved lists"]')?.value).toBe(
       lists[1].id,
     );
+  });
+
+  test("shares a saved list and prevents updating it", async () => {
+    const savedList = await saveSpinnyList({
+      title: "Weekend",
+      choices: [{ id: "rest", label: "Rest", weight: 1, included: true, parentChoiceId: null }],
+    });
+    const sharedId = "Ea_kS6FFmaMCcMNpnapQpw";
+    const clipboardWrite = vi.spyOn(navigator.clipboard, "writeText").mockResolvedValue();
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({ status: 200, id: sharedId }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+    const container = renderApp();
+    const select = await vi.waitFor(() => {
+      const dropdown = container.querySelector<HTMLSelectElement>('[aria-label="Saved lists"]');
+      expect(dropdown?.disabled).toBe(false);
+      return dropdown;
+    });
+    setSelectValue(select, savedList.id);
+    setInputValue(container.querySelector('[aria-label="List title"]'), "Shared weekend");
+    setInputValue(container.querySelector('[aria-label="Choice name"]'), "Relax");
+
+    const shareButton = findButton(container, "Share");
+    expect(shareButton.disabled).toBe(false);
+    shareButton.click();
+
+    await vi.waitFor(async () =>
+      expect(await readSpinnyLists()).toEqual([
+        {
+          id: sharedId,
+          title: "Shared weekend",
+          choices: [
+            { id: "rest", label: "Relax", weight: 1, included: true, parentChoiceId: null },
+          ],
+          shared: true,
+        },
+      ]),
+    );
+
+    expect(fetchMock).toHaveBeenCalledOnce();
+    const [, requestInit] = fetchMock.mock.calls[0];
+    const requestBody = JSON.parse(String(requestInit?.body)) as { data: string };
+    const sharedList = JSON.parse(requestBody.data) as Record<string, unknown>;
+    expect(sharedList).toEqual({
+      id: savedList.id,
+      title: "Shared weekend",
+      choices: [{ id: "rest", label: "Relax", weight: 1, included: true, parentChoiceId: null }],
+    });
+    expect(sharedList).not.toHaveProperty("shared");
+
+    await vi.waitFor(() => {
+      expect(container.querySelector<HTMLSelectElement>('[aria-label="Saved lists"]')?.value).toBe(
+        sharedId,
+      );
+      expect(findButton(container, "Update").disabled).toBe(true);
+      expect(findButton(container, "Save as new").disabled).toBe(false);
+      expect(findButton(container, "Share").disabled).toBe(false);
+      expect(
+        Array.from(
+          container.querySelectorAll<HTMLOptionElement>('[aria-label="Saved lists"] option'),
+        ).find((option) => option.value === sharedId)?.textContent,
+      ).toBe("🌐 Shared weekend");
+    });
+
+    const expectedLink = new URL("/", window.location.origin);
+    expectedLink.searchParams.set("share_list_id", sharedId);
+    const dialog = container.querySelector<HTMLElement>('[role="dialog"]');
+    const linkInput = dialog?.querySelector<HTMLInputElement>('[aria-label="Shared list link"]');
+    expect(dialog?.querySelector("h2")?.textContent).toBe("List shared successfully");
+    expect(dialog?.textContent).toContain(
+      "Send this link to someone so they can open the shared list.",
+    );
+    expect(linkInput?.disabled).toBe(true);
+    expect(linkInput?.value).toBe(expectedLink.toString());
+
+    findButton(container, "Copy").click();
+    await vi.waitFor(() => {
+      expect(clipboardWrite).toHaveBeenCalledWith(expectedLink.toString());
+      expect(findButton(container, "Copied")).not.toBeNull();
+    });
+    findButton(container, "Close").click();
+    expect(container.querySelector('[role="dialog"]')).toBeNull();
+
+    findButton(container, "Share").click();
+    expect(
+      container.querySelector<HTMLInputElement>('[role="dialog"] [aria-label="Shared list link"]')
+        ?.value,
+    ).toBe(expectedLink.toString());
+    expect(fetchMock).toHaveBeenCalledOnce();
+    findButton(container, "Close").click();
+
+    expect(findTooltip("Cannot update shared lists. Save as new to edit").hidden).toBe(false);
   });
 
   test("confirms deletion and resets to a new default list", async () => {

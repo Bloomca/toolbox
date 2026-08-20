@@ -166,7 +166,7 @@ function renderComponent(component: ReturnType<typeof ConfirmationProvider>): HT
 }
 
 function dialogTitle(container: HTMLElement): string | null | undefined {
-  return container.querySelector("[data-toolbox-confirmation-title]")?.textContent;
+  return container.querySelector("[data-toolbox-modal-title]")?.textContent;
 }
 
 function findButton(container: HTMLElement, label: string): HTMLButtonElement {

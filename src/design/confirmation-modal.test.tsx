@@ -28,8 +28,8 @@ describe("ConfirmationModal", () => {
     });
 
     const dialog = container.querySelector<HTMLElement>('[role="alertdialog"]');
-    const title = container.querySelector<HTMLElement>("[data-toolbox-confirmation-title]");
-    const message = container.querySelector<HTMLElement>("[data-toolbox-confirmation-message]");
+    const title = container.querySelector<HTMLElement>("[data-toolbox-modal-title]");
+    const message = container.querySelector<HTMLElement>("[data-toolbox-modal-description]");
     expect(dialog?.getAttribute("aria-modal")).toBe("true");
     expect(dialog?.getAttribute("aria-labelledby")).toBe(title?.id);
     expect(dialog?.getAttribute("aria-describedby")).toBe(message?.id);
@@ -47,7 +47,7 @@ describe("ConfirmationModal", () => {
     const onCancel = vi.fn();
     const container = renderModal({ onCancel });
     const dialog = container.querySelector<HTMLElement>('[role="alertdialog"]');
-    const backdrop = container.querySelector<HTMLElement>("[data-toolbox-confirmation-backdrop]");
+    const backdrop = container.querySelector<HTMLElement>("[data-toolbox-modal-backdrop]");
 
     dialog?.click();
     expect(onCancel).not.toHaveBeenCalled();
