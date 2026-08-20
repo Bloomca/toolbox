@@ -9,4 +9,5 @@ export type SavedSpinnyList = {
   id: string;
   title: string;
   choices: EditableChoice[];
+  shared?: true;
 };

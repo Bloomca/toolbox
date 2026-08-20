@@ -3,7 +3,14 @@ import { createState, onMount, onUnmount } from "veles";
 import { useConfirmation } from "../../design/confirmation";
 import { ChoiceEditor } from "./choice-editor";
 import { SpinnerPanel } from "./spinner-panel";
-import { deleteSpinnyList, readSpinnyLists, saveSpinnyList, updateSpinnyList } from "./storage";
+import { shareSpinnyList } from "./share";
+import {
+  deleteSpinnyList,
+  markSpinnyListShared,
+  readSpinnyLists,
+  saveSpinnyList,
+  updateSpinnyList,
+} from "./storage";
 import styles from "./style.module.css";
 import type { EditableChoice, SavedSpinnyList } from "./types";
 import type { WheelChoice } from "./wheel";
@@ -30,6 +37,15 @@ export function SpinnyApp() {
   const choices$ = createState<EditableChoice[]>(createDefaultChoices());
   const selectedCategoryPath$ = createState<string[]>([]);
   const isSpinning$ = createState(false);
+  const editorDisabled$ = isSpinning$
+    .combine(isSaving$)
+    .map(([isSpinning, isSaving]) => isSpinning || isSaving);
+  const selectedListShared$ = selectedListId$
+    .combine(savedLists$)
+    .map(
+      ([selectedListId, savedLists]) =>
+        savedLists.find((list) => list.id === selectedListId)?.shared === true,
+    );
   const saveDisabled$ = listTitle$
     .combine(isSpinning$, isSaving$, listsLoaded$)
     .map(
@@ -93,6 +109,49 @@ export function SpinnyApp() {
     }
   }
 
+  async function shareList() {
+    const id = selectedListId$.get();
+    const title = listTitle$.get().trim();
+    const selectedList = savedLists$.get().find((list) => list.id === id);
+    if (
+      !id ||
+      !title ||
+      !selectedList ||
+      selectedList.shared ||
+      !listsLoaded$.get() ||
+      isSaving$.get() ||
+      isSpinning$.get()
+    ) {
+      return;
+    }
+
+    const list: SavedSpinnyList = {
+      id,
+      title,
+      choices: choices$.get().map((choice) => ({ ...choice })),
+    };
+
+    isSaving$.set(true);
+    try {
+      const sharedId = await shareSpinnyList(list);
+      await markSpinnyListShared({
+        id,
+        sharedId,
+        title: list.title,
+        choices: list.choices,
+      });
+      const lists = await readSpinnyLists();
+      if (mounted) {
+        savedLists$.set(lists);
+        selectedListId$.set(sharedId);
+      }
+    } catch (error) {
+      console.error("Could not share Spinny list.", error);
+    } finally {
+      if (mounted) isSaving$.set(false);
+    }
+  }
+
   async function deleteList() {
     const id = selectedListId$.get();
     if (!id || isSaving$.get() || isSpinning$.get()) return;
@@ -123,7 +182,8 @@ export function SpinnyApp() {
 
   async function updateList() {
     const id = selectedListId$.get();
-    if (!id || isSaving$.get() || isSpinning$.get()) return;
+    const selectedList = savedLists$.get().find((list) => list.id === id);
+    if (!id || selectedList?.shared || isSaving$.get() || isSpinning$.get()) return;
 
     isSaving$.set(true);
     try {
@@ -143,7 +203,7 @@ export function SpinnyApp() {
   }
 
   function selectList(id: string) {
-    if (isSpinning$.get()) return;
+    if (isSpinning$.get() || isSaving$.get()) return;
 
     const list = savedLists$.get().find((list) => list.id === id);
     if (!list) return;
@@ -171,13 +231,15 @@ export function SpinnyApp() {
         savedLists$={savedLists$}
         selectedListId$={selectedListId$}
         listsLoaded$={listsLoaded$}
-        disabled$={isSpinning$}
+        disabled$={editorDisabled$}
         saveDisabled$={saveDisabled$}
+        shared$={selectedListShared$}
         onCreateNewList={createNewList}
         onDeleteList={deleteList}
         onEdit={clearResult}
         onSave={saveList}
         onSelectList={selectList}
+        onShare={shareList}
         onUpdate={updateList}
       />
     </div>

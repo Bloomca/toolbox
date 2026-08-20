@@ -46,6 +46,47 @@ export function saveSpinnyList({
   return operation;
 }
 
+export function markSpinnyListShared({
+  id,
+  sharedId,
+  title,
+  choices,
+}: {
+  id: string;
+  sharedId: string;
+  title: string;
+  choices: readonly EditableChoice[];
+}): Promise<SavedSpinnyList> {
+  const normalizedTitle = normalizeListTitle(title);
+  if (!normalizedTitle) return Promise.reject(new TypeError("A Spinny list needs a title."));
+
+  const operation = writeQueue.then(async () => {
+    const lists = await readSpinnyLists();
+    const index = lists.findIndex((list) => list.id === id);
+    if (index === -1) throw new Error(`Spinny list "${id}" was not found.`);
+    if (lists[index].shared) throw new Error(`Spinny list "${id}" is already shared.`);
+    if (lists.some((list, listIndex) => listIndex !== index && list.id === sharedId)) {
+      throw new Error(`Spinny list "${sharedId}" already exists.`);
+    }
+
+    const list: SavedSpinnyList = {
+      id: sharedId,
+      title: title.trim(),
+      choices: choices.map((choice) => ({ ...choice })),
+      shared: true,
+    };
+    lists[index] = list;
+    await storage.write(LISTS_STORAGE_KEY, lists);
+    return list;
+  });
+
+  writeQueue = operation.then(
+    () => undefined,
+    () => undefined,
+  );
+  return operation;
+}
+
 export function deleteSpinnyList(id: string): Promise<void> {
   const operation = writeQueue.then(async () => {
     const lists = await readSpinnyLists();
@@ -75,6 +116,8 @@ export function updateSpinnyList({
     const lists = await readSpinnyLists();
     const index = lists.findIndex((list) => list.id === id);
     if (index === -1) throw new Error(`Spinny list "${id}" was not found.`);
+    if (lists[index].shared)
+      throw new Error(`Spinny list "${id}" is shared and cannot be updated.`);
 
     const list: SavedSpinnyList = {
       id,
@@ -106,7 +149,8 @@ function isSavedSpinnyList(value: unknown): value is SavedSpinnyList {
     typeof list.title === "string" &&
     normalizeListTitle(list.title).length > 0 &&
     Array.isArray(list.choices) &&
-    list.choices.every(isEditableChoice)
+    list.choices.every(isEditableChoice) &&
+    (list.shared === undefined || list.shared === true)
   );
 }
 

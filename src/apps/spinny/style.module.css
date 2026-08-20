@@ -7,7 +7,7 @@
   min-height: 0;
   overflow: hidden;
   display: grid;
-  grid-template-columns: minmax(300px, 1fr) minmax(230px, 330px);
+  grid-template-columns: minmax(300px, 1fr) minmax(230px, 350px);
   align-items: stretch;
   gap: 24px;
   box-sizing: border-box;

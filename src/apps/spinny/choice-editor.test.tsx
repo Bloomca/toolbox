@@ -192,6 +192,67 @@ describe("Spinny choice editor", () => {
     );
   });
 
+  test("shares a saved list and prevents updating it", async () => {
+    const savedList = await saveSpinnyList({
+      title: "Weekend",
+      choices: [{ id: "rest", label: "Rest", weight: 1, included: true, parentChoiceId: null }],
+    });
+    const sharedId = "Ea_kS6FFmaMCcMNpnapQpw";
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({ status: 200, id: sharedId }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+    const container = renderApp();
+    const select = await vi.waitFor(() => {
+      const dropdown = container.querySelector<HTMLSelectElement>('[aria-label="Saved lists"]');
+      expect(dropdown?.disabled).toBe(false);
+      return dropdown;
+    });
+    setSelectValue(select, savedList.id);
+    setInputValue(container.querySelector('[aria-label="List title"]'), "Shared weekend");
+    setInputValue(container.querySelector('[aria-label="Choice name"]'), "Relax");
+
+    const shareButton = findButton(container, "Share");
+    expect(shareButton.disabled).toBe(false);
+    shareButton.click();
+
+    await vi.waitFor(async () =>
+      expect(await readSpinnyLists()).toEqual([
+        {
+          id: sharedId,
+          title: "Shared weekend",
+          choices: [
+            { id: "rest", label: "Relax", weight: 1, included: true, parentChoiceId: null },
+          ],
+          shared: true,
+        },
+      ]),
+    );
+
+    expect(fetchMock).toHaveBeenCalledOnce();
+    const [, requestInit] = fetchMock.mock.calls[0];
+    const requestBody = JSON.parse(String(requestInit?.body)) as { data: string };
+    const sharedList = JSON.parse(requestBody.data) as Record<string, unknown>;
+    expect(sharedList).toEqual({
+      id: savedList.id,
+      title: "Shared weekend",
+      choices: [{ id: "rest", label: "Relax", weight: 1, included: true, parentChoiceId: null }],
+    });
+    expect(sharedList).not.toHaveProperty("shared");
+
+    await vi.waitFor(() => {
+      expect(container.querySelector<HTMLSelectElement>('[aria-label="Saved lists"]')?.value).toBe(
+        sharedId,
+      );
+      expect(findButton(container, "Update").disabled).toBe(true);
+      expect(findButton(container, "Save as new").disabled).toBe(false);
+      expect(findButton(container, "Share").disabled).toBe(true);
+    });
+    expect(findTooltip("Cannot update shared lists. Save as new to edit").hidden).toBe(false);
+  });
+
   test("confirms deletion and resets to a new default list", async () => {
     const weekend = await saveSpinnyList({
       title: "Weekend",
