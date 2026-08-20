@@ -13,6 +13,14 @@ export default defineConfig({
       "veles/jsx-dev-runtime": "veles/jsx-runtime",
     },
   },
+  server: {
+    proxy: {
+      "/api": {
+        target: "https://toolbox.bloomca.me",
+        changeOrigin: true,
+      },
+    },
+  },
   build: {
     rollupOptions: {
       input: {
