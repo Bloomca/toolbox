@@ -33,6 +33,7 @@ type ChoiceEditorProps = {
   onCreateNewList: () => void;
   onDeleteList: () => void;
   onEdit: () => void;
+  onImportList: () => void;
   onSave: () => void;
   onSelectList: (id: string) => void;
   onShare: () => void;
@@ -51,6 +52,7 @@ export function ChoiceEditor({
   onCreateNewList,
   onDeleteList,
   onEdit,
+  onImportList,
   onSave,
   onSelectList,
   onShare,
@@ -62,6 +64,9 @@ export function ChoiceEditor({
   const shareDisabled$ = saveDisabled$
     .combine(shared$, disabled$)
     .map(([saveDisabled, shared, editorDisabled]) => (shared ? editorDisabled : saveDisabled));
+  const importDisabled$ = disabled$
+    .combine(listsLoaded$)
+    .map(([editorDisabled, listsLoaded]) => editorDisabled || !listsLoaded);
   const canAddTopLevelChoice$ = choices$.map(
     (choices) => countChoicesForParent(choices, null) < MAX_CHOICES,
   );
@@ -142,6 +147,9 @@ export function ChoiceEditor({
         ))}
         <Button disabled={newListDisabled$.attribute()} onClick={onCreateNewList}>
           New
+        </Button>
+        <Button disabled={importDisabled$.attribute()} onClick={onImportList}>
+          Import
         </Button>
       </div>
       <label class={styles.listTitleField}>

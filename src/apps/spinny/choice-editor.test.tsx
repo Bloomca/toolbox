@@ -140,6 +140,85 @@ describe("Spinny choice editor", () => {
     expect((await readSpinnyLists())[0].choices[0].label).toBe("Rest");
   });
 
+  test("imports and selects a valid shared list", async () => {
+    const localList = await saveSpinnyList({ title: "Local", choices: [] });
+    const sharedId = "Ea_kS6FFmaMCcMNpnapQpw";
+    const importedChoice = {
+      id: "sun",
+      label: "Sun",
+      weight: 1,
+      included: true,
+      parentChoiceId: null,
+    };
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          id: sharedId,
+          data: JSON.stringify({
+            id: "client-generated-id",
+            title: "Imported list",
+            choices: [importedChoice],
+          }),
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } },
+      ),
+    );
+    const container = renderApp();
+    const importButton = findButton(container, "Import");
+    await vi.waitFor(() => expect(importButton.disabled).toBe(false));
+    importButton.click();
+
+    const dialog = container.querySelector<HTMLElement>('[role="dialog"]');
+    const linkInput = dialog?.querySelector<HTMLInputElement>('[aria-label="Shared list link"]');
+    expect(dialog?.querySelector("h2")?.textContent).toBe("Import list");
+    expect(findButton(dialog ?? container, "Import").disabled).toBe(true);
+    expect(findButton(dialog ?? container, "Cancel").disabled).toBe(false);
+
+    setInputValue(linkInput, "not a shared link");
+    findButton(dialog ?? container, "Import").click();
+    await vi.waitFor(() =>
+      expect(dialog?.querySelector('[role="alert"]')?.textContent).toBe(
+        "Enter a valid shared list link.",
+      ),
+    );
+    expect(fetchMock).not.toHaveBeenCalled();
+
+    const link = new URL("https://toolbox.bloomca.me/");
+    link.searchParams.set("share_list_id", sharedId);
+    setInputValue(linkInput, link.toString());
+    findButton(dialog ?? container, "Import").click();
+
+    await vi.waitFor(async () =>
+      expect(await readSpinnyLists()).toEqual([
+        localList,
+        {
+          id: sharedId,
+          title: "Imported list",
+          choices: [importedChoice],
+          shared: true,
+        },
+      ]),
+    );
+    expect(fetchMock).toHaveBeenCalledOnce();
+    expect(fetchMock).toHaveBeenCalledWith(`/api/spinny/share/${sharedId}`);
+    expect(container.querySelector('[role="dialog"]')).toBeNull();
+    expect(container.querySelector<HTMLSelectElement>('[aria-label="Saved lists"]')?.value).toBe(
+      sharedId,
+    );
+    expect(
+      Array.from(
+        container.querySelectorAll<HTMLOptionElement>('[aria-label="Saved lists"] option'),
+      ).find((option) => option.value === sharedId)?.textContent,
+    ).toBe("🌐 Imported list");
+    expect(container.querySelector<HTMLInputElement>('[aria-label="List title"]')?.value).toBe(
+      "Imported list",
+    );
+    expect(container.querySelector<HTMLInputElement>('[aria-label="Choice name"]')?.value).toBe(
+      "Sun",
+    );
+    expect(findButton(container, "Update").disabled).toBe(true);
+  });
+
   test("saves the current list", async () => {
     const container = renderApp();
     const saveButton = findButton(container, "Save");

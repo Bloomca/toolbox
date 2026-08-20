@@ -46,6 +46,34 @@ export function saveSpinnyList({
   return operation;
 }
 
+export function saveImportedSpinnyList(list: SavedSpinnyList): Promise<SavedSpinnyList> {
+  if (!list.shared || !isSavedSpinnyList(list)) {
+    return Promise.reject(new TypeError("A valid shared Spinny list is required."));
+  }
+
+  const operation = writeQueue.then(async () => {
+    const lists = await readSpinnyLists();
+    const importedList: SavedSpinnyList = {
+      id: list.id,
+      title: list.title.trim(),
+      choices: list.choices.map((choice) => ({ ...choice })),
+      shared: true,
+    };
+    const existingIndex = lists.findIndex((savedList) => savedList.id === importedList.id);
+    if (existingIndex === -1) lists.push(importedList);
+    else lists[existingIndex] = importedList;
+
+    await storage.write(LISTS_STORAGE_KEY, lists);
+    return importedList;
+  });
+
+  writeQueue = operation.then(
+    () => undefined,
+    () => undefined,
+  );
+  return operation;
+}
+
 export function markSpinnyListShared({
   id,
   sharedId,
@@ -140,7 +168,7 @@ export function normalizeListTitle(title: string): string {
   return title.trim().toLowerCase();
 }
 
-function isSavedSpinnyList(value: unknown): value is SavedSpinnyList {
+export function isSavedSpinnyList(value: unknown): value is SavedSpinnyList {
   if (typeof value !== "object" || value === null) return false;
 
   const list = value as Partial<SavedSpinnyList>;

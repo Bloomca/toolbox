@@ -2,13 +2,15 @@ import { createState, onMount, onUnmount } from "veles";
 
 import { useConfirmation } from "../../design/confirmation";
 import { ChoiceEditor } from "./choice-editor";
+import { ImportListModal } from "./import-list-modal";
 import { SpinnerPanel } from "./spinner-panel";
-import { shareSpinnyList } from "./share";
+import { getSharedSpinnyList, parseSharedSpinnyListId, shareSpinnyList } from "./share";
 import { SharedListModal } from "./shared-list-modal";
 import {
   deleteSpinnyList,
   markSpinnyListShared,
   readSpinnyLists,
+  saveImportedSpinnyList,
   saveSpinnyList,
   updateSpinnyList,
 } from "./storage";
@@ -54,6 +56,7 @@ export function SpinnyApp() {
         !listsLoaded || isSpinning || isSaving || !title.trim(),
     );
   const result$ = createState<WheelChoice | null>(null);
+  const importModalOpen$ = createState(false);
   const sharedListLink$ = createState<string | null>(null);
   let mounted = true;
 
@@ -106,6 +109,31 @@ export function SpinnyApp() {
       if (mounted) savedLists$.set(lists);
     } catch (error) {
       console.error("Could not reload Spinny lists.", error);
+    } finally {
+      if (mounted) isSaving$.set(false);
+    }
+  }
+
+  async function importList(value: string) {
+    const id = parseSharedSpinnyListId(value);
+    if (!id) throw new Error("Enter a valid shared list link.");
+    if (!listsLoaded$.get() || isSaving$.get() || isSpinning$.get()) {
+      throw new Error("Lists are currently busy. Try again shortly.");
+    }
+
+    isSaving$.set(true);
+    try {
+      const importedList = await getSharedSpinnyList(id);
+      await saveImportedSpinnyList(importedList);
+      const lists = await readSpinnyLists();
+      if (mounted) {
+        savedLists$.set(lists);
+        selectedListId$.set(importedList.id);
+        listTitle$.set(importedList.title);
+        choices$.set(importedList.choices.map((choice) => ({ ...choice })));
+        selectedCategoryPath$.set([]);
+        clearResult();
+      }
     } finally {
       if (mounted) isSaving$.set(false);
     }
@@ -238,11 +266,18 @@ export function SpinnyApp() {
         onCreateNewList={createNewList}
         onDeleteList={deleteList}
         onEdit={clearResult}
+        onImportList={() => importModalOpen$.set(true)}
         onSave={saveList}
         onSelectList={selectList}
         onShare={shareList}
         onUpdate={updateList}
       />
+
+      {importModalOpen$.render((open) =>
+        open ? (
+          <ImportListModal onImport={importList} onClose={() => importModalOpen$.set(false)} />
+        ) : null,
+      )}
 
       {sharedListLink$.render((link) =>
         link ? <SharedListModal link={link} onClose={() => sharedListLink$.set(null)} /> : null,

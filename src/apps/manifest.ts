@@ -16,7 +16,7 @@ export const APP_MANIFEST = {
   spinny: {
     name: "Spinny",
     standalonePath: "/spinny",
-    preferredWindowSize: { width: 880, height: 660 },
+    preferredWindowSize: { width: 920, height: 660 },
   },
 } satisfies Record<string, AppDefinition>;
 
