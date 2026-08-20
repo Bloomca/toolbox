@@ -249,7 +249,7 @@ describe("Spinny choice editor", () => {
       );
       expect(findButton(container, "Update").disabled).toBe(true);
       expect(findButton(container, "Save as new").disabled).toBe(false);
-      expect(findButton(container, "Share").disabled).toBe(true);
+      expect(findButton(container, "Share").disabled).toBe(false);
       expect(
         Array.from(
           container.querySelectorAll<HTMLOptionElement>('[aria-label="Saved lists"] option'),
@@ -275,6 +275,15 @@ describe("Spinny choice editor", () => {
     });
     findButton(container, "Close").click();
     expect(container.querySelector('[role="dialog"]')).toBeNull();
+
+    findButton(container, "Share").click();
+    expect(
+      container.querySelector<HTMLInputElement>('[role="dialog"] [aria-label="Shared list link"]')
+        ?.value,
+    ).toBe(expectedLink.toString());
+    expect(fetchMock).toHaveBeenCalledOnce();
+    findButton(container, "Close").click();
+
     expect(findTooltip("Cannot update shared lists. Save as new to edit").hidden).toBe(false);
   });
 

@@ -115,17 +115,15 @@ export function SpinnyApp() {
     const id = selectedListId$.get();
     const title = listTitle$.get().trim();
     const selectedList = savedLists$.get().find((list) => list.id === id);
-    if (
-      !id ||
-      !title ||
-      !selectedList ||
-      selectedList.shared ||
-      !listsLoaded$.get() ||
-      isSaving$.get() ||
-      isSpinning$.get()
-    ) {
+    if (!id || !selectedList || !listsLoaded$.get() || isSaving$.get() || isSpinning$.get()) {
       return;
     }
+
+    if (selectedList.shared) {
+      sharedListLink$.set(createSharedListLink(id));
+      return;
+    }
+    if (!title) return;
 
     const list: SavedSpinnyList = {
       id,

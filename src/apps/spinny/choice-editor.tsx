@@ -60,8 +60,8 @@ export function ChoiceEditor({
     .combine(shared$)
     .map(([editorDisabled, shared]) => editorDisabled || shared);
   const shareDisabled$ = saveDisabled$
-    .combine(shared$)
-    .map(([saveDisabled, shared]) => saveDisabled || shared);
+    .combine(shared$, disabled$)
+    .map(([saveDisabled, shared, editorDisabled]) => (shared ? editorDisabled : saveDisabled));
   const canAddTopLevelChoice$ = choices$.map(
     (choices) => countChoicesForParent(choices, null) < MAX_CHOICES,
   );
