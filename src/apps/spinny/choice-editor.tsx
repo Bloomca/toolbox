@@ -134,7 +134,10 @@ export function ChoiceEditor({
             onChange={(event) => onSelectList(event.target.value)}
             placeholder="New list (unsaved)"
             placeholderSelected={selectedListId === null}
-            options={savedLists.map((list) => ({ value: list.id, label: list.title }))}
+            options={savedLists.map((list) => ({
+              value: list.id,
+              label: list.shared ? `🌐 ${list.title}` : list.title,
+            }))}
           />
         ))}
         <Button disabled={newListDisabled$.attribute()} onClick={onCreateNewList}>

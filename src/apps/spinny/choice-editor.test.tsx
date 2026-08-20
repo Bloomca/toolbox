@@ -249,6 +249,11 @@ describe("Spinny choice editor", () => {
       expect(findButton(container, "Update").disabled).toBe(true);
       expect(findButton(container, "Save as new").disabled).toBe(false);
       expect(findButton(container, "Share").disabled).toBe(true);
+      expect(
+        Array.from(
+          container.querySelectorAll<HTMLOptionElement>('[aria-label="Saved lists"] option'),
+        ).find((option) => option.value === sharedId)?.textContent,
+      ).toBe("🌐 Shared weekend");
     });
     expect(findTooltip("Cannot update shared lists. Save as new to edit").hidden).toBe(false);
   });
