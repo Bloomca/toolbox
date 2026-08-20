@@ -137,6 +137,7 @@ export function SpinnyApp() {
 
     if (savedLists$.get().some((list) => list.id === id)) {
       selectList(id);
+      removeSharedListIdFromURL();
       return;
     }
 
@@ -152,6 +153,7 @@ export function SpinnyApp() {
         choices$.set(importedList.choices.map((choice) => ({ ...choice })));
         selectedCategoryPath$.set([]);
         clearResult();
+        removeSharedListIdFromURL();
       }
     } finally {
       if (mounted) isSaving$.set(false);
@@ -307,6 +309,12 @@ export function SpinnyApp() {
       )}
     </div>
   );
+}
+
+function removeSharedListIdFromURL() {
+  const url = new URL(window.location.href);
+  url.searchParams.delete("share_list_id");
+  window.history.replaceState(window.history.state, "", url.toString());
 }
 
 function createSharedListLink(id: string): string {

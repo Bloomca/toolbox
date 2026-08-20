@@ -254,7 +254,7 @@ describe("Spinny choice editor", () => {
       resolveResponse = resolve;
     });
     const fetchMock = vi.spyOn(globalThis, "fetch").mockReturnValue(responsePromise);
-    window.history.replaceState({}, "", `/?share_list_id=${sharedId}`);
+    window.history.replaceState({}, "", `/?keep=1&share_list_id=${sharedId}#spinny`);
 
     const container = renderApp();
     const expectedLink = new URL("/", window.location.origin);
@@ -286,6 +286,8 @@ describe("Spinny choice editor", () => {
     expect(container.querySelector<HTMLInputElement>('[aria-label="List title"]')?.value).toBe(
       "Linked list",
     );
+    expect(window.location.search).toBe("?keep=1");
+    expect(window.location.hash).toBe("#spinny");
   });
 
   test("saves the current list", async () => {
