@@ -1,0 +1,22 @@
+.linkField {
+  position: relative;
+  margin-top: 16px;
+}
+
+.linkField input {
+  padding-right: 72px;
+}
+
+.copyButton {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  width: 68px;
+  height: 32px;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 24px;
+}

@@ -198,6 +198,7 @@ describe("Spinny choice editor", () => {
       choices: [{ id: "rest", label: "Rest", weight: 1, included: true, parentChoiceId: null }],
     });
     const sharedId = "Ea_kS6FFmaMCcMNpnapQpw";
+    const clipboardWrite = vi.spyOn(navigator.clipboard, "writeText").mockResolvedValue();
     const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(JSON.stringify({ status: 200, id: sharedId }), {
         status: 200,
@@ -255,6 +256,25 @@ describe("Spinny choice editor", () => {
         ).find((option) => option.value === sharedId)?.textContent,
       ).toBe("🌐 Shared weekend");
     });
+
+    const expectedLink = new URL("/", window.location.origin);
+    expectedLink.searchParams.set("share_list_id", sharedId);
+    const dialog = container.querySelector<HTMLElement>('[role="dialog"]');
+    const linkInput = dialog?.querySelector<HTMLInputElement>('[aria-label="Shared list link"]');
+    expect(dialog?.querySelector("h2")?.textContent).toBe("List shared successfully");
+    expect(dialog?.textContent).toContain(
+      "Send this link to someone so they can open the shared list.",
+    );
+    expect(linkInput?.disabled).toBe(true);
+    expect(linkInput?.value).toBe(expectedLink.toString());
+
+    findButton(container, "Copy").click();
+    await vi.waitFor(() => {
+      expect(clipboardWrite).toHaveBeenCalledWith(expectedLink.toString());
+      expect(findButton(container, "Copied")).not.toBeNull();
+    });
+    findButton(container, "Close").click();
+    expect(container.querySelector('[role="dialog"]')).toBeNull();
     expect(findTooltip("Cannot update shared lists. Save as new to edit").hidden).toBe(false);
   });
 

@@ -4,6 +4,7 @@ import { useConfirmation } from "../../design/confirmation";
 import { ChoiceEditor } from "./choice-editor";
 import { SpinnerPanel } from "./spinner-panel";
 import { shareSpinnyList } from "./share";
+import { SharedListModal } from "./shared-list-modal";
 import {
   deleteSpinnyList,
   markSpinnyListShared,
@@ -53,6 +54,7 @@ export function SpinnyApp() {
         !listsLoaded || isSpinning || isSaving || !title.trim(),
     );
   const result$ = createState<WheelChoice | null>(null);
+  const sharedListLink$ = createState<string | null>(null);
   let mounted = true;
 
   onMount(() => {
@@ -144,6 +146,7 @@ export function SpinnyApp() {
       if (mounted) {
         savedLists$.set(lists);
         selectedListId$.set(sharedId);
+        sharedListLink$.set(createSharedListLink(sharedId));
       }
     } catch (error) {
       console.error("Could not share Spinny list.", error);
@@ -242,8 +245,18 @@ export function SpinnyApp() {
         onShare={shareList}
         onUpdate={updateList}
       />
+
+      {sharedListLink$.render((link) =>
+        link ? <SharedListModal link={link} onClose={() => sharedListLink$.set(null)} /> : null,
+      )}
     </div>
   );
+}
+
+function createSharedListLink(id: string): string {
+  const url = new URL("/", window.location.origin);
+  url.searchParams.set("share_list_id", id);
+  return url.toString();
 }
 
 function createDefaultChoices(): EditableChoice[] {
