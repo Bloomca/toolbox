@@ -28,6 +28,7 @@ afterEach(() => {
   unmount = undefined;
   document.body.replaceChildren();
   localStorage.clear();
+  window.history.replaceState({}, "", "/");
   vi.restoreAllMocks();
 });
 
@@ -217,6 +218,74 @@ describe("Spinny choice editor", () => {
       "Sun",
     );
     expect(findButton(container, "Update").disabled).toBe(true);
+
+    const savedListsDropdown = container.querySelector<HTMLSelectElement>(
+      '[aria-label="Saved lists"]',
+    );
+    setSelectValue(savedListsDropdown, localList.id);
+    expect(savedListsDropdown?.value).toBe(localList.id);
+
+    findButton(container, "Import").click();
+    const secondDialog = container.querySelector<HTMLElement>('[role="dialog"]');
+    setInputValue(
+      secondDialog?.querySelector<HTMLInputElement>('[aria-label="Shared list link"]') ?? null,
+      link.toString(),
+    );
+    findButton(secondDialog ?? container, "Import").click();
+
+    await vi.waitFor(() =>
+      expect(container.querySelector<HTMLSelectElement>('[aria-label="Saved lists"]')?.value).toBe(
+        sharedId,
+      ),
+    );
+    expect(fetchMock).toHaveBeenCalledOnce();
+    expect(container.querySelector('[role="dialog"]')).toBeNull();
+  });
+
+  test("automatically imports a shared list from the page URL", async () => {
+    const sharedId = "P-dSPfBNzTcitZLJy2dLEw";
+    const importedList = {
+      id: "client-generated-id",
+      title: "Linked list",
+      choices: [{ id: "sun", label: "Sun", weight: 1, included: true, parentChoiceId: null }],
+    };
+    let resolveResponse!: (response: Response) => void;
+    const responsePromise = new Promise<Response>((resolve) => {
+      resolveResponse = resolve;
+    });
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockReturnValue(responsePromise);
+    window.history.replaceState({}, "", `/?share_list_id=${sharedId}`);
+
+    const container = renderApp();
+    const expectedLink = new URL("/", window.location.origin);
+    expectedLink.searchParams.set("share_list_id", sharedId);
+
+    await vi.waitFor(() => {
+      const dialog = container.querySelector<HTMLElement>('[role="dialog"]');
+      expect(dialog?.querySelector("h2")?.textContent).toBe("Import list");
+      const linkInput = dialog?.querySelector<HTMLInputElement>('[aria-label="Shared list link"]');
+      expect(linkInput?.value).toBe(expectedLink.toString());
+      expect(linkInput?.disabled).toBe(true);
+      expect(fetchMock).toHaveBeenCalledWith(`/api/spinny/share/${sharedId}`);
+    });
+
+    resolveResponse(
+      new Response(JSON.stringify({ id: sharedId, data: JSON.stringify(importedList) }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+
+    await vi.waitFor(async () =>
+      expect(await readSpinnyLists()).toEqual([{ ...importedList, id: sharedId, shared: true }]),
+    );
+    expect(container.querySelector('[role="dialog"]')).toBeNull();
+    expect(container.querySelector<HTMLSelectElement>('[aria-label="Saved lists"]')?.value).toBe(
+      sharedId,
+    );
+    expect(container.querySelector<HTMLInputElement>('[aria-label="List title"]')?.value).toBe(
+      "Linked list",
+    );
   });
 
   test("saves the current list", async () => {

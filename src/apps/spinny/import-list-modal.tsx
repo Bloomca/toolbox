@@ -1,4 +1,4 @@
-import { createState } from "veles";
+import { createState, onMount } from "veles";
 
 import { Button } from "../../design/button";
 import { Modal } from "../../design/modal";
@@ -6,18 +6,26 @@ import { TextInput } from "../../design/text-input";
 import styles from "./import-list-modal.module.css";
 
 export function ImportListModal({
+  initialValue = "",
+  autoImport = false,
   onImport,
   onClose,
 }: {
+  initialValue?: string;
+  autoImport?: boolean;
   onImport: (value: string) => Promise<void>;
   onClose: () => void;
 }) {
-  const value$ = createState("");
+  const value$ = createState(initialValue);
   const isImporting$ = createState(false);
   const error$ = createState<string | null>(null);
   const importDisabled$ = value$
     .combine(isImporting$)
     .map(([value, isImporting]) => isImporting || !value.trim());
+
+  onMount(() => {
+    if (autoImport) void importList();
+  });
 
   function close() {
     if (!isImporting$.get()) onClose();

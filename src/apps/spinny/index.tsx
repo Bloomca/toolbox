@@ -18,6 +18,11 @@ import styles from "./style.module.css";
 import type { EditableChoice, SavedSpinnyList } from "./types";
 import type { WheelChoice } from "./wheel";
 
+type ImportModalOptions = {
+  initialValue: string;
+  autoImport: boolean;
+};
+
 const INITIAL_CHOICES: readonly EditableChoice[] = [
   { id: "sun", label: "Sun", weight: 1, included: true, parentChoiceId: null },
   { id: "water", label: "Water", weight: 1, included: true, parentChoiceId: null },
@@ -56,7 +61,7 @@ export function SpinnyApp() {
         !listsLoaded || isSpinning || isSaving || !title.trim(),
     );
   const result$ = createState<WheelChoice | null>(null);
-  const importModalOpen$ = createState(false);
+  const importModal$ = createState<ImportModalOptions | null>(null);
   const sharedListLink$ = createState<string | null>(null);
   let mounted = true;
 
@@ -67,7 +72,16 @@ export function SpinnyApp() {
       })
       .catch((error) => console.error("Could not load Spinny lists.", error))
       .finally(() => {
-        if (mounted) listsLoaded$.set(true);
+        if (!mounted) return;
+
+        listsLoaded$.set(true);
+        const sharedListId = parseSharedSpinnyListId(window.location.href);
+        if (sharedListId) {
+          importModal$.set({
+            initialValue: createSharedListLink(sharedListId),
+            autoImport: true,
+          });
+        }
       });
   });
 
@@ -119,6 +133,11 @@ export function SpinnyApp() {
     if (!id) throw new Error("Enter a valid shared list link.");
     if (!listsLoaded$.get() || isSaving$.get() || isSpinning$.get()) {
       throw new Error("Lists are currently busy. Try again shortly.");
+    }
+
+    if (savedLists$.get().some((list) => list.id === id)) {
+      selectList(id);
+      return;
     }
 
     isSaving$.set(true);
@@ -266,16 +285,20 @@ export function SpinnyApp() {
         onCreateNewList={createNewList}
         onDeleteList={deleteList}
         onEdit={clearResult}
-        onImportList={() => importModalOpen$.set(true)}
+        onImportList={() => importModal$.set({ initialValue: "", autoImport: false })}
         onSave={saveList}
         onSelectList={selectList}
         onShare={shareList}
         onUpdate={updateList}
       />
 
-      {importModalOpen$.render((open) =>
-        open ? (
-          <ImportListModal onImport={importList} onClose={() => importModalOpen$.set(false)} />
+      {importModal$.render((options) =>
+        options ? (
+          <ImportListModal
+            {...options}
+            onImport={importList}
+            onClose={() => importModal$.set(null)}
+          />
         ) : null,
       )}
 
